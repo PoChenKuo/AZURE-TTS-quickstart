@@ -1,2 +1,8 @@
 .env
 /node_modules
+*.wav
+/data/audio/*
+!/data/audio/.gitkeep
+/data/db/*
+!/data/db/.gitkeep
+/syntheses.db

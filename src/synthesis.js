@@ -5,13 +5,13 @@ const {SPEECH_KEY, ENDPOINT } = process.env;
 function synthesizeSpeech() {
     const args = process.argv.slice(2);
     if (args.length < 2) {
-        console.error("Usage: node synthesis.js <output-audio-file> <text-to-synthesize>");
+        console.error("Usage: node src/synthesis.js <output-audio-file> <text-to-synthesize>");
         process.exit(1);
     }
     const audioFile = args[0].trim();
     const text = args.slice(1).join(" ").trim();
     if (!audioFile || !text) {
-        console.error("Usage: node synthesis.js <output-audio-file> <text-to-synthesize>");
+        console.error("Usage: node src/synthesis.js <output-audio-file> <text-to-synthesize>");
         process.exit(1);
     }
     // This example requires environment variables named "ENDPOINT" and "SPEECH_KEY"
