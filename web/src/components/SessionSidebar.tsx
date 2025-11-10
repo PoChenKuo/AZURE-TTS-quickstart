@@ -46,51 +46,55 @@ export function SessionSidebar({
   }
 
   return (
-    <aside className="conversation-sidebar">
-      <button className="btn btn-secondary" type="button" onClick={onNewChat}>
+    <aside className="w-64 max-w-full rounded-2xl border border-white/10 bg-slate-900/60 p-4 flex flex-col gap-3 h-fit max-lg:w-full">
+      <button className="btn btn-secondary w-full" type="button" onClick={onNewChat}>
         + New chat
       </button>
-      <div className="session-list">
-        {(sessions ?? []).map((session) => (
-          <div
-            key={session.id}
-            className={clsx("session-item", {
-              "session-item-active": session.id === activeSessionId,
-            })}
-            role="group"
-          >
+      <div className="flex flex-col gap-2 max-h-[70vh] overflow-y-auto pr-1">
+        {(sessions ?? []).map((session) => {
+          const isActive = session.id === activeSessionId;
+          return (
             <div
-              role="button"
-              tabIndex={0}
-              className="session-click"
-              onClick={() => onSelect(session.id ?? null)}
-              onKeyDown={(event) => {
-                if (event.target !== event.currentTarget) {
-                  return;
-                }
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault();
-                  onSelect(session.id ?? null);
-                }
-              }}
+              key={session.id}
+              className={clsx(
+                "flex flex-col gap-1.5 rounded-xl border border-transparent bg-slate-900/40 px-3 py-2 cursor-pointer focus-within:ring-2 focus-within:ring-cyan-400/60",
+                isActive ? "border-cyan-400/70 bg-slate-900/80" : "hover:border-slate-600/40"
+              )}
+              role="group"
             >
-              <div className="session-item-main">
+              <div
+                role="button"
+                tabIndex={0}
+                className="flex flex-col gap-1.5 outline-none"
+                onClick={() => onSelect(session.id ?? null)}
+                onKeyDown={(event) => {
+                  if (event.target !== event.currentTarget) {
+                    return;
+                  }
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    onSelect(session.id ?? null);
+                  }
+                }}
+              >
                 {renamingId === session.id ? (
-                  // Replace the static label with an inline rename form for the selected session.
-                  <form className="session-rename-form" onSubmit={handleRenameSubmit}>
+                  <form className="flex flex-col gap-2" onSubmit={handleRenameSubmit}>
                     <input
-                      className="session-rename-input"
+                      className="w-full rounded-lg border border-slate-500/60 bg-slate-950/70 px-2 py-1 text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-400"
                       value={renameValue}
                       onChange={(event) => setRenameValue(event.target.value)}
                       autoFocus
                     />
-                    <div className="session-rename-actions">
-                      <button type="submit" className="btn btn-primary">
+                    <div className="flex justify-end gap-2">
+                      <button
+                        type="submit"
+                        className="rounded-full bg-sky-600 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white hover:bg-sky-500"
+                      >
                         Save
                       </button>
                       <button
                         type="button"
-                        className="btn btn-text"
+                        className="text-xs font-semibold text-slate-300 hover:text-white"
                         onClick={(event) => {
                           event.stopPropagation();
                           setRenamingId(null);
@@ -102,46 +106,46 @@ export function SessionSidebar({
                   </form>
                 ) : (
                   <>
-                    <span className="session-title">{session.title}</span>
-                    <span className="session-meta">
+                    <span className="text-sm font-semibold text-slate-100 truncate">
+                      {session.title}
+                    </span>
+                    <span className="text-xs text-slate-400">
                       {new Date(session.updatedUtc).toLocaleTimeString()}
                     </span>
                   </>
                 )}
               </div>
+              <div className="flex justify-end gap-2 text-xs text-slate-400">
+                <button
+                  type="button"
+                  className="hover:text-slate-100"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    startRenaming(session.id, session.title);
+                  }}
+                  aria-label="Rename chat"
+                >
+                  Rename
+                </button>
+                <button
+                  type="button"
+                  className="text-rose-300 hover:text-rose-200"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    if (session.id != null) {
+                      onDelete(session.id);
+                    }
+                  }}
+                  aria-label="Delete chat"
+                >
+                  ×
+                </button>
+              </div>
             </div>
-            <div className="session-actions">
-              <button
-                type="button"
-                className="session-rename"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  startRenaming(session.id, session.title);
-                }}
-                aria-label="Rename chat"
-              >
-                Rename
-              </button>
-              <button
-                type="button"
-                className="session-delete"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  if (session.id != null) {
-                    onDelete(session.id);
-                  }
-                }}
-                aria-label="Delete chat"
-              >
-                X
-              </button>
-            </div>
-          </div>
-        ))}
+          );
+        })}
         {!sessions?.length && (
-          <p className="text-muted" style={{ padding: "0.5rem 0.2rem" }}>
-            Creating your first chat...
-          </p>
+          <p className="text-sm text-slate-400 px-1 py-2">Creating your first chat...</p>
         )}
       </div>
     </aside>
