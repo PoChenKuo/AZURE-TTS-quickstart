@@ -70,4 +70,5 @@ export type ChatSession = {
   geminiCache?: string;
   goalPersona?: string;
   customConstraints?: string;
+  achievementLog?: string;
 };

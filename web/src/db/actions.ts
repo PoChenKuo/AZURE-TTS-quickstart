@@ -93,6 +93,23 @@ export async function deleteChatAudio(chatId: number) {
   return true;
 }
 
+export async function deleteChatMessage(id: number) {
+  const message = await db.chats.get(id);
+  if (!message) {
+    return false;
+  }
+  await db.transaction("rw", db.chats, db.utterances, db.chatSessions, async () => {
+    await db.chats.delete(id);
+    if (message.linkedUtteranceId) {
+      await db.utterances.delete(message.linkedUtteranceId);
+    }
+    await db.chatSessions.update(message.sessionId, {
+      updatedUtc: new Date().toISOString(),
+    });
+  });
+  return true;
+}
+
 export async function logWorkerMessage(message: {
   worker?: "cleanup" | "system";
   level?: "info" | "warn" | "error";
@@ -129,6 +146,7 @@ export async function updateChatSessionDetails(
   details: {
     goalPersona?: string;
     customConstraints?: string;
+    achievementLog?: string;
   }
 ) {
   await db.chatSessions.update(id, {

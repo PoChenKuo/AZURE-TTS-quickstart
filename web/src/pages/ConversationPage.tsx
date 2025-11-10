@@ -15,6 +15,7 @@ import {
   setDefaultVoice,
   deleteChatAudio,
   updateChatSessionDetails,
+  deleteChatMessage,
 } from "../db/actions";
 import { SessionSidebar } from "../components/SessionSidebar";
 import { ConversationLog } from "../components/ConversationLog";
@@ -43,12 +44,15 @@ function ConversationPage() {
   const [deletingAudioIds, setDeletingAudioIds] = useState<Set<number>>(
     () => new Set()
   );
-  const [milestonePlan, setMilestonePlan] = useState<string | null>(null);
-  const [isGeneratingMilestones, setIsGeneratingMilestones] = useState(false);
+  const [achievementPlan, setAchievementPlan] = useState<string | null>(null);
+  const [isGeneratingAchievements, setIsGeneratingAchievements] = useState(false);
   const [goalDraft, setGoalDraft] = useState("");
   const [constraintsDraft, setConstraintsDraft] = useState("");
   const [isSavingSessionDetails, setIsSavingSessionDetails] = useState(false);
   const [showContextEditor, setShowContextEditor] = useState(false);
+  const [deletingMessageIds, setDeletingMessageIds] = useState<Set<number>>(
+    () => new Set()
+  );
   const autoPlayAudioRef = useRef<HTMLAudioElement>(null);
 
   const utteranceById = useMemo(() => {
@@ -91,6 +95,7 @@ function ConversationPage() {
     setGoalDraft(session?.goalPersona ?? "");
     setConstraintsDraft(session?.customConstraints ?? "");
     setShowContextEditor(false);
+    setAchievementPlan(session?.achievementLog ? session.achievementLog : null);
   }, [activeSessionId, sessions]);
 
   const messageMutation = useConversationMutation({
@@ -250,49 +255,96 @@ function ConversationPage() {
     }
   }
 
-  async function handleGenerateMilestones() {
+  async function handleDeleteMessage(message: ChatMessage) {
+    if (!message.id) {
+      return;
+    }
+    setDeletingMessageIds((prev) => {
+      const next = new Set(prev);
+      next.add(message.id!);
+      return next;
+    });
+    try {
+      await deleteChatMessage(message.id);
+      pushToast("Deleted message.", "info");
+    }
+    catch (error) {
+      console.error(error);
+      pushToast("Failed to delete message.", "error");
+    }
+    finally {
+      setDeletingMessageIds((prev) => {
+        const next = new Set(prev);
+        next.delete(message.id!);
+        return next;
+      });
+    }
+  }
+
+  async function handleGenerateAchievements() {
     if (!normalizedSettings?.geminiKey) {
       pushToast("Add your Gemini key in Settings first.", "info");
       return;
     }
     if (!messages.length) {
-      pushToast("Start a conversation before generating milestones.", "info");
+      pushToast("Start a conversation before generating achievements.", "info");
       return;
     }
-    setIsGeneratingMilestones(true);
+    setIsGeneratingAchievements(true);
     try {
-    const systemPrompt = buildSystemPrompt(
-      activeSession?.goalPersona,
-      activeSession?.customConstraints
-    );
+      const systemPrompt = buildSystemPrompt(
+        activeSession?.goalPersona,
+        activeSession?.customConstraints
+      );
       const history: ChatMessage[] = [
         ...(systemPrompt
           ? [
-              {
-                sessionId: activeSessionId ?? 0,
-                role: "system",
-                content: systemPrompt,
-                createdUtc: new Date().toISOString(),
-              } as ChatMessage,
-            ]
+            {
+              sessionId: activeSessionId ?? 0,
+              role: "system",
+              content: systemPrompt,
+              createdUtc: new Date().toISOString(),
+            } as ChatMessage,
+          ]
           : []),
         ...messages,
       ];
       const result = await callGemini(
-        "Review the conversation and propose 3-5 concrete milestones that move the user toward their goal. Each milestone should include a short label and 1-2 actionable bullet points. Finish with one sentence encouraging the user.",
+        "Provide a factual summary of the user’s progress toward their stated goal based solely on the conversation and constraints. List verifiable achievements and explain their direct contribution to goal advancement. Exclude encouragement, interpretation, or subjective language.",
         normalizedSettings,
         history,
         undefined,
         normalizedSettings.geminiModel ?? DEFAULT_GEMINI_MODEL
       );
-      setMilestonePlan(result.text.trim());
+      const plan = result.text.trim();
+      setAchievementPlan(plan);
+      if (activeSession?.id) {
+        await updateChatSessionDetails(activeSession.id, {
+          achievementLog: plan,
+        });
+      }
     }
     catch (error) {
       console.error(error);
-      pushToast("Failed to generate milestones.", "error");
+      pushToast("Failed to generate achievements.", "error");
     }
     finally {
-      setIsGeneratingMilestones(false);
+      setIsGeneratingAchievements(false);
+    }
+  }
+
+  async function handleClearAchievements() {
+    if (!activeSession?.id) {
+      setAchievementPlan(null);
+      return;
+    }
+    setAchievementPlan(null);
+    try {
+      await updateChatSessionDetails(activeSession.id, { achievementLog: "" });
+    }
+    catch (error) {
+      console.error(error);
+      pushToast("Failed to clear achievements.", "error");
     }
   }
 
@@ -381,7 +433,23 @@ function ConversationPage() {
           </header>
 
           {activeSession && showContextEditor && (
-            <div className="grid gap-3 rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+            <div className="grid gap-4 rounded-2xl border border-white/10 bg-slate-900/70 p-4 overflow-auto">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-white">Chat context</p>
+                  <p className="text-xs text-slate-400">
+                    Clarify the mission and rules for this conversation.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-2 rounded-full border border-white/20 px-4 py-1 text-sm text-white hover:bg-white/10 disabled:opacity-60"
+                  onClick={handleGenerateAchievements}
+                  disabled={isGeneratingAchievements}
+                >
+                  {isGeneratingAchievements ? "Generating..." : "Generate achievements"}
+                </button>
+              </div>
               <div className="grid gap-1">
                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-300">
                   Goal / Persona
@@ -406,6 +474,29 @@ function ConversationPage() {
                   rows={2}
                 />
               </div>
+
+              {achievementPlan && (
+                <div className="rounded-2xl border border-white/15 bg-slate-900/80 p-4 shadow-inner shadow-black/30 space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-white">Achievement log</p>
+                      <p className="text-xs text-slate-400">
+                        Snapshot of accomplishments based on this conversation.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      className="text-xs text-slate-400 hover:text-white"
+                      onClick={handleClearAchievements}
+                    >
+                      Clear
+                    </button>
+                  </div>
+                  <pre className="whitespace-pre-wrap text-sm text-slate-100 bg-slate-950/70 rounded-xl p-3 overflow-x-auto">
+                    {achievementPlan}
+                  </pre>
+                </div>
+              )}
               <div className="flex justify-end gap-3">
                 <button
                   type="button"
@@ -433,14 +524,6 @@ function ConversationPage() {
             <span className="text-sm text-slate-200 flex items-center gap-2">
               Assistant audio auto-plays on each response.
             </span>
-            <button
-              type="button"
-              className="inline-flex items-center gap-2 rounded-full border border-white/20 px-4 py-1 text-sm text-white hover:bg-white/10 disabled:opacity-60"
-              onClick={handleGenerateMilestones}
-              disabled={isGeneratingMilestones}
-            >
-              {isGeneratingMilestones ? "Generating..." : "Generate milestones"}
-            </button>
             {selectableVoices.length > 0 && (
               <label className="voice-select inline-flex items-center gap-3 rounded-full border border-white/20 px-3 py-1 text-sm text-white">
                 <span className="text-xs uppercase tracking-wide text-slate-300">
@@ -478,27 +561,6 @@ function ConversationPage() {
             />
           </div>
 
-          {milestonePlan && (
-            <div className="rounded-2xl border border-white/15 bg-slate-900/80 p-4 shadow-inner shadow-black/30 space-y-3">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-semibold text-white">Milestone plan</p>
-                  <p className="text-xs text-slate-400">
-                    Summarized from the current conversation.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  className="text-xs text-slate-400 hover:text-white"
-                  onClick={() => setMilestonePlan(null)}
-                >
-                  Clear
-                </button>
-              </div>
-              <pre className="whitespace-pre-wrap text-sm text-slate-100 bg-slate-950/70 rounded-xl p-3 overflow-x-auto">{milestonePlan}</pre>
-            </div>
-          )}
-
           <ConversationLog
             messages={messages}
             utteranceById={utteranceById}
@@ -507,6 +569,8 @@ function ConversationPage() {
             sharedAudioRef={autoPlayAudioRef}
             onDeleteAudio={handleDeleteAudio}
             deletingAudioIds={deletingAudioIds}
+            onDeleteMessage={handleDeleteMessage}
+            deletingMessageIds={deletingMessageIds}
           />
 
           <MessageComposer

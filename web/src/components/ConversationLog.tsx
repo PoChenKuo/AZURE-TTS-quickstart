@@ -14,6 +14,8 @@ type ConversationLogProps = {
   sharedAudioRef?: RefObject<HTMLAudioElement | null>;
   onDeleteAudio?: (message: ChatMessage) => void | Promise<void>;
   deletingAudioIds?: Set<number>;
+  onDeleteMessage?: (message: ChatMessage) => void | Promise<void>;
+  deletingMessageIds?: Set<number>;
 };
 
 // Displays the chronological transcript plus any cached audio previews.
@@ -25,6 +27,8 @@ export function ConversationLog({
   sharedAudioRef,
   onDeleteAudio,
   deletingAudioIds,
+  onDeleteMessage,
+  deletingMessageIds,
 }: ConversationLogProps) {
   const fallbackAudioRef = useRef<HTMLAudioElement | null>(null);
   const audioRef =
@@ -55,6 +59,8 @@ export function ConversationLog({
 
         const isDeleting =
           Boolean(message.id != null && deletingAudioIds?.has(message.id));
+        const deletingMessage =
+          Boolean(message.id != null && deletingMessageIds?.has(message.id));
 
         return (
           <article
@@ -70,7 +76,19 @@ export function ConversationLog({
               <span className="inline-flex items-center gap-1 rounded-full border border-slate-500/60 px-3 py-1 text-[0.65rem] font-semibold tracking-wide text-slate-200">
                 {message.role.toUpperCase()}
               </span>
-              <span>{new Date(message.createdUtc).toLocaleTimeString()}</span>
+              <div className="flex items-center gap-3">
+                <span>{new Date(message.createdUtc).toLocaleTimeString()}</span>
+                {message.id && onDeleteMessage && (
+                  <button
+                    type="button"
+                    className="text-rose-300 hover:text-rose-200 disabled:opacity-60"
+                    onClick={() => onDeleteMessage(message)}
+                    disabled={deletingMessage}
+                  >
+                    {deletingMessage ? "Deleting..." : "Delete"}
+                  </button>
+                )}
+              </div>
             </div>
             <div className="markdown-body text-slate-100">
               <ReactMarkdown
