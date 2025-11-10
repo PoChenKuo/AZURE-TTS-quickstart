@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import type { FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { FormEvent, ChangeEvent } from "react";
 import { useSettingsRecord, useVoices } from "../db/hooks";
 import { saveSettings, setDefaultVoice } from "../db/actions";
 import type { AppSettings } from "../types";
@@ -11,6 +11,7 @@ import {
 } from "../lib/gemini";
 import { synthesizeWithAzure } from "../lib/azureSpeech";
 import { createAudioUrl, generateToneWav } from "../lib/audio";
+import { exportDatabase, importDatabase } from "../lib/dataBackup";
 
 type FormState = {
   speechKey: string;
@@ -41,6 +42,9 @@ function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isTestingAzure, setIsTestingAzure] = useState(false);
   const [isTestingGemini, setIsTestingGemini] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (settings) {
@@ -162,7 +166,65 @@ function SettingsPage() {
     }
   }
 
+  async function handleExportBackup() {
+    setIsExporting(true);
+    try {
+      const snapshot = await exportDatabase();
+      const blob = new Blob([JSON.stringify(snapshot, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `indexed-speech-backup-${new Date()
+        .toISOString()
+        .replace(/[:.]/g, "-")}.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      pushToast("Exported backup.", "success");
+    }
+    catch (error) {
+      console.error(error);
+      pushToast("Failed to export backup.", "error");
+    }
+    finally {
+      setIsExporting(false);
+    }
+  }
+
+  function handleImportBackupClick() {
+    fileInputRef.current?.click();
+  }
+
+  async function handleImportFile(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) {
+      return;
+    }
+    if (!window.confirm("Importing will overwrite existing data. Continue?")) {
+      return;
+    }
+    setIsImporting(true);
+    try {
+      const text = await file.text();
+      const payload = JSON.parse(text);
+      await importDatabase(payload);
+      pushToast("Imported backup.", "success");
+    }
+    catch (error) {
+      console.error(error);
+      pushToast("Failed to import backup.", "error");
+    }
+    finally {
+      setIsImporting(false);
+    }
+  }
+
   return (
+    <>
     <section className="card grid">
       <header>
         <h2>Settings</h2>
@@ -307,6 +369,45 @@ function SettingsPage() {
         </div>
       </form>
     </section>
+
+    <section className="card grid" style={{ gap: "0.75rem" }}>
+      <header>
+        <h2>Data Backup</h2>
+        <p className="text-muted">
+          Export a JSON snapshot of all IndexedDB tables or restore from a previous backup.
+        </p>
+      </header>
+      <div className="flex flex-wrap gap-3">
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={handleExportBackup}
+          disabled={isExporting}
+        >
+          {isExporting ? "Exporting…" : "Export backup"}
+        </button>
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={handleImportBackupClick}
+          disabled={isImporting}
+        >
+          {isImporting ? "Importing…" : "Import backup"}
+        </button>
+      </div>
+      <p className="text-muted text-sm">
+        Importing will overwrite your existing chats, voices, and cached audio. Make sure you trust
+        the backup file.
+      </p>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="application/json"
+        className="hidden"
+        onChange={handleImportFile}
+      />
+    </section>
+    </>
   );
 }
 
