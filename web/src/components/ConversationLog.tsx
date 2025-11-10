@@ -16,6 +16,7 @@ type ConversationLogProps = {
   deletingAudioIds?: Set<number>;
   onDeleteMessage?: (message: ChatMessage) => void | Promise<void>;
   deletingMessageIds?: Set<number>;
+  playbackRate?: number;
 };
 
 // Displays the chronological transcript plus any cached audio previews.
@@ -29,6 +30,7 @@ export function ConversationLog({
   deletingAudioIds,
   onDeleteMessage,
   deletingMessageIds,
+  playbackRate = 1,
 }: ConversationLogProps) {
   const fallbackAudioRef = useRef<HTMLAudioElement | null>(null);
   const audioRef =
@@ -117,6 +119,7 @@ export function ConversationLog({
                     onDeleteAudio ? () => onDeleteAudio(message) : undefined
                   }
                   isDeleting={isDeleting}
+                  playbackRate={playbackRate}
                 />
               </div>
             )}

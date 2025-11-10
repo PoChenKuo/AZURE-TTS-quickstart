@@ -8,6 +8,7 @@ type AudioPreviewProps = {
   sharedAudioRef?: RefObject<HTMLAudioElement | null>;
   onDelete?: () => void | Promise<void>;
   isDeleting?: boolean;
+  playbackRate?: number;
 };
 
 export function AudioPreview({
@@ -16,6 +17,7 @@ export function AudioPreview({
   sharedAudioRef,
   onDelete,
   isDeleting,
+  playbackRate = 1,
 }: AudioPreviewProps) {
   const url = useMemo(() => createAudioUrl(buffer), [buffer]);
   const localAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -31,6 +33,7 @@ export function AudioPreview({
     if (!sharedAudioRef) {
       element.src = url;
     }
+    element.playbackRate = playbackRate;
 
     const handlePlay = () => {
       if (sharedAudioRef) {
@@ -62,7 +65,7 @@ export function AudioPreview({
       setIsPlaying(false);
       // URL.revokeObjectURL(url);
     };
-  }, [url, audioRef, sharedAudioRef]);
+  }, [url, audioRef, sharedAudioRef, playbackRate]);
 
   const handleToggle = () => {
     if (isDeleting) {

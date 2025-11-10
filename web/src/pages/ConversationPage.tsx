@@ -53,6 +53,7 @@ function ConversationPage() {
   const [deletingMessageIds, setDeletingMessageIds] = useState<Set<number>>(
     () => new Set()
   );
+  const [playbackRate, setPlaybackRate] = useState(1);
   const autoPlayAudioRef = useRef<HTMLAudioElement>(null);
 
   const utteranceById = useMemo(() => {
@@ -114,6 +115,13 @@ function ConversationPage() {
     autoPlayAudioRef,
     activeSessionId
   );
+
+  useEffect(() => {
+    const element = autoPlayAudioRef.current;
+    if (element) {
+      element.playbackRate = playbackRate;
+    }
+  }, [playbackRate]);
 
   // Bridge form submission to the conversation mutation, auto-creating a session when needed.
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -187,6 +195,7 @@ function ConversationPage() {
     }
 
     try {
+      
       await synthesizeAndStoreAssistantAudio({
         text: message.content,
         settings: normalizedSettings,
@@ -571,6 +580,7 @@ function ConversationPage() {
             deletingAudioIds={deletingAudioIds}
             onDeleteMessage={handleDeleteMessage}
             deletingMessageIds={deletingMessageIds}
+            playbackRate={playbackRate}
           />
 
           <MessageComposer
@@ -578,6 +588,8 @@ function ConversationPage() {
             onChange={setInput}
             onSubmit={handleSubmit}
             isSubmitting={messageMutation.isPending}
+            playbackRate={playbackRate}
+            onPlaybackRateChange={setPlaybackRate}
           />
         </div>
       </section>
