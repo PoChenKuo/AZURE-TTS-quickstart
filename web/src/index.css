@@ -244,6 +244,50 @@ select {
   flex-wrap: wrap;
 }
 
+.voice-select {
+  min-width: 0;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.voice-select:focus-within {
+  border-color: rgba(14, 165, 233, 0.6);
+  box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.25);
+}
+
+.voice-select-control {
+  position: relative;
+  min-width: 160px;
+}
+
+.voice-select-input {
+  width: 100%;
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  padding-right: 1.5rem;
+}
+
+.voice-select-input:disabled {
+  opacity: 0.65;
+}
+
+.voice-select-input option {
+  color: #0f172a;
+  background: #e2e8f0;
+}
+
+.voice-select-arrow {
+  position: absolute;
+  right: 0.35rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.8rem;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
 @media (max-width: 640px) {
   .table-mobile-stack {
     border-collapse: separate;

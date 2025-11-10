@@ -80,6 +80,19 @@ export async function deleteUtterance(id: number) {
   await db.utterances.delete(id);
 }
 
+export async function deleteChatAudio(chatId: number) {
+  const message = await db.chats.get(chatId);
+  if (!message?.linkedUtteranceId) {
+    return false;
+  }
+  const utteranceId = message.linkedUtteranceId;
+  await db.transaction("rw", db.chats, db.utterances, async () => {
+    await db.chats.update(chatId, { linkedUtteranceId: undefined });
+    await db.utterances.delete(utteranceId);
+  });
+  return true;
+}
+
 export async function logWorkerMessage(message: {
   worker?: "cleanup" | "system";
   level?: "info" | "warn" | "error";

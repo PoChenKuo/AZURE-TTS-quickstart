@@ -20,6 +20,9 @@ export async function synthesizeAndStoreAssistantAudio({
   requestId,
 }: AssistantAudioArgs) {
   const buffer = await synthesizeAssistantSpeech(text, settings, defaultVoice);
+  if (!buffer || buffer.byteLength === 0) {
+    throw new Error("Synthesized audio is empty.");
+  }
   const durationMs = getWavDurationMs(buffer);
   const expiresUtc = new Date(
     Date.now() + minutesToMs((settings.cleanupIntervalMinutes ?? 5) * 3)

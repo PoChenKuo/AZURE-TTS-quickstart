@@ -6,12 +6,16 @@ type AudioPreviewProps = {
   buffer: ArrayBuffer;
   durationMs?: number;
   sharedAudioRef?: RefObject<HTMLAudioElement | null>;
+  onDelete?: () => void | Promise<void>;
+  isDeleting?: boolean;
 };
 
 export function AudioPreview({
   buffer,
   durationMs,
   sharedAudioRef,
+  onDelete,
+  isDeleting,
 }: AudioPreviewProps) {
   const url = useMemo(() => createAudioUrl(buffer), [buffer]);
   const localAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -61,6 +65,9 @@ export function AudioPreview({
   }, [url, audioRef, sharedAudioRef]);
 
   const handleToggle = () => {
+    if (isDeleting) {
+      return;
+    }
     const element = audioRef.current;
     if (!element) {
       return;
@@ -88,16 +95,31 @@ export function AudioPreview({
       : "Play audio";
 
   return (
-    <div className="inline-flex items-center gap-2 text-xs text-slate-300">
-      <button
-        type="button"
-        className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-sky-400/60 text-white transition hover:bg-sky-500/30"
-        onClick={handleToggle}
-        aria-label={isPlaying ? "Pause assistant audio" : "Play assistant audio"}
-      >
-        {isPlaying ? "❚❚" : "▶"}
-      </button>
-      <span>{label}</span>
+    <div className="inline-flex flex-wrap items-center gap-3 text-xs text-slate-300">
+      <div className="inline-flex items-center gap-2">
+        <button
+          type="button"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-sky-400/60 text-white transition hover:bg-sky-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+          onClick={handleToggle}
+          aria-label={
+            isPlaying ? "Pause assistant audio" : "Play assistant audio"
+          }
+          disabled={isDeleting}
+        >
+          {isPlaying ?  "❚❚" : "▶"}
+        </button>
+        <span>{label}</span>
+      </div>
+      {onDelete && (
+        <button
+          type="button"
+          className="inline-flex h-8 items-center rounded-full border border-rose-400/60 px-3 text-rose-100 transition hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+          onClick={onDelete}
+          disabled={isDeleting}
+        >
+          {isDeleting ? "Deleting" : "Delete"}
+        </button>
+      )}
       {!sharedAudioRef && <audio ref={audioRef} className="hidden" />}
     </div>
   );

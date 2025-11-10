@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState, useEffect } from "react";
-import type { FormEvent } from "react";
+import type { FormEvent, ChangeEvent } from "react";
 import clsx from "clsx";
 import {
   useChatMessages,
@@ -12,6 +12,8 @@ import {
   createChatSession,
   deleteChatSession,
   renameChatSession,
+  setDefaultVoice,
+  deleteChatAudio,
 } from "../db/actions";
 import { SessionSidebar } from "../components/SessionSidebar";
 import { ConversationLog } from "../components/ConversationLog";
@@ -34,6 +36,10 @@ function ConversationPage() {
   const utterances = useUtterances(100) ?? [];
   const [input, setInput] = useState("");
   const [sessionDetailsOpen, setSessionDetailsOpen] = useState(false);
+  const [isUpdatingVoice, setIsUpdatingVoice] = useState(false);
+  const [deletingAudioIds, setDeletingAudioIds] = useState<Set<number>>(
+    () => new Set()
+  );
   const autoPlayAudioRef = useRef<HTMLAudioElement>(null);
 
   const utteranceById = useMemo(() => {
@@ -55,6 +61,11 @@ function ConversationPage() {
     }
     return voices.find((voice) => voice.isDefault) ?? voices[0];
   }, [voices, settings?.defaultVoiceId]);
+  const selectableVoices = useMemo(
+    () => voices.filter((voice): voice is (typeof voices)[number] & { id: number } => voice.id != null),
+    [voices]
+  );
+  const selectedVoiceId = defaultVoice?.id != null ? String(defaultVoice.id) : "";
 
   const activeSession = sessions?.find((session) => session.id === activeSessionId);
   const sessionCacheState = activeSession
@@ -118,6 +129,29 @@ function ConversationPage() {
     await renameChatSession(sessionId, next);
   }
 
+  async function handleVoiceChange(event: ChangeEvent<HTMLSelectElement>) {
+    const value = event.target.value;
+    if (!value) {
+      return;
+    }
+    const nextId = Number(value);
+    if (!Number.isFinite(nextId) || defaultVoice?.id === nextId) {
+      return;
+    }
+    setIsUpdatingVoice(true);
+    try {
+      await setDefaultVoice(nextId);
+      pushToast("Default voice updated.", "success");
+    }
+    catch (error) {
+      console.error(error);
+      pushToast("Failed to update voice.", "error");
+    }
+    finally {
+      setIsUpdatingVoice(false);
+    }
+  }
+
   async function handleRegenerateAudio(message: ChatMessage) {
     if (message.role !== "assistant" || !message.id) {
       return;
@@ -145,6 +179,37 @@ function ConversationPage() {
     catch (error) {
       console.error(error);
       pushToast("Failed to regenerate audio.", "error");
+    }
+  }
+
+  async function handleDeleteAudio(message: ChatMessage) {
+    if (message.role !== "assistant" || !message.id) {
+      return;
+    }
+    setDeletingAudioIds((prev) => {
+      const next = new Set(prev);
+      next.add(message.id!);
+      return next;
+    });
+    try {
+      const removed = await deleteChatAudio(message.id);
+      if (removed) {
+        pushToast("Deleted assistant audio.", "info");
+      }
+      else {
+        pushToast("Audio already removed.", "info");
+      }
+    }
+    catch (error) {
+      console.error(error);
+      pushToast("Failed to delete audio.", "error");
+    }
+    finally {
+      setDeletingAudioIds((prev) => {
+        const next = new Set(prev);
+        next.delete(message.id!);
+        return next;
+      });
     }
   }
 
@@ -183,7 +248,7 @@ function ConversationPage() {
                   </button>
                   <div
                     className={clsx(
-                      "absolute right-0 top-full mt-3 w-80 max-w-[80vw] rounded-2xl border border-white/15 bg-slate-900/95 p-4 shadow-2xl transition-all duration-150",
+                      "absolute right-0 top-full mt-3 w-80 max-w-[80vw] rounded-2xl border border-white/15 bg-slate-900/95 p-4 shadow-2xl transition-all duration-150 z-10",
                       sessionDetailsOpen
                         ? "pointer-events-auto translate-y-0 opacity-100"
                         : "pointer-events-none -translate-y-1 opacity-0"
@@ -194,7 +259,7 @@ function ConversationPage() {
                         <span className="font-semibold text-slate-50">SHA256:</span>{" "}
                         <code className="text-cyan-100">{activeSession.sha256}</code>
                       </div>
-                      <div className="break-all">
+                      <div className="break-word">
                         <span className="font-semibold text-slate-50">Gemini cache:</span>{" "}
                         {cacheDisplayLabel ? (
                           <span className="text-cyan-200">{cacheDisplayLabel}</span>
@@ -203,7 +268,7 @@ function ConversationPage() {
                         )}
                       </div>
 
-                      <div className="break-all">
+                      <div className="break-word">
                         <span className="text-sm text-slate-400">
                           Gemini replies are synthesized into audio blobs and cached in IndexedDB. Toggle autoplay if you prefer manual playback.
                         </span>
@@ -219,10 +284,35 @@ function ConversationPage() {
             <span className="text-sm text-slate-200 flex items-center gap-2">
               Assistant audio auto-plays on each response.
             </span>
-            {defaultVoice && (
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/20 px-4 py-1 text-sm text-white">
-                Voice: {defaultVoice.name}
-              </span>
+            {selectableVoices.length > 0 && (
+              <label className="voice-select inline-flex items-center gap-3 rounded-full border border-white/20 px-3 py-1 text-sm text-white">
+                <span className="text-xs uppercase tracking-wide text-slate-300">
+                  Voice
+                </span>
+                <div className="voice-select-control">
+                  <select
+                    className="voice-select-input"
+                    value={selectedVoiceId}
+                    onChange={handleVoiceChange}
+                    disabled={isUpdatingVoice}
+                  >
+                    {!selectedVoiceId && (
+                      <option value="" disabled>
+                        Select voice
+                      </option>
+                    )}
+                    {selectableVoices.map((voice) => (
+                      <option key={voice.id} value={voice.id}>
+                        {voice.name}
+                        {voice.isDefault ? " • default" : ""}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="voice-select-arrow" aria-hidden="true">
+                    ▾
+                  </span>
+                </div>
+              </label>
             )}
             <audio
               ref={autoPlayAudioRef}
@@ -237,6 +327,8 @@ function ConversationPage() {
             className="flex-1 min-h-0 overflow-y-auto pr-2"
             onRegenerateAudio={handleRegenerateAudio}
             sharedAudioRef={autoPlayAudioRef}
+            onDeleteAudio={handleDeleteAudio}
+            deletingAudioIds={deletingAudioIds}
           />
 
           <MessageComposer
@@ -260,4 +352,3 @@ function normalizeSettingsRecord(settings: AppSettings): AppSettings {
     endpoint: settings.endpoint ?? undefined,
   };
 }
-

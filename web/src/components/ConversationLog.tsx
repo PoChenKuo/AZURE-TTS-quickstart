@@ -12,6 +12,8 @@ type ConversationLogProps = {
   className?: string;
   onRegenerateAudio?: (message: ChatMessage) => void;
   sharedAudioRef?: RefObject<HTMLAudioElement | null>;
+  onDeleteAudio?: (message: ChatMessage) => void | Promise<void>;
+  deletingAudioIds?: Set<number>;
 };
 
 // Displays the chronological transcript plus any cached audio previews.
@@ -21,6 +23,8 @@ export function ConversationLog({
   className,
   onRegenerateAudio,
   sharedAudioRef,
+  onDeleteAudio,
+  deletingAudioIds,
 }: ConversationLogProps) {
   const fallbackAudioRef = useRef<HTMLAudioElement | null>(null);
   const audioRef =
@@ -48,6 +52,9 @@ export function ConversationLog({
         const hasAudio = Boolean(utterance && (!durationKnown || durationMs > 0));
         const needsRegeneration =
           message.role === "assistant" && (!utterance || !hasAudio);
+
+        const isDeleting =
+          Boolean(message.id != null && deletingAudioIds?.has(message.id));
 
         return (
           <article
@@ -88,6 +95,10 @@ export function ConversationLog({
                   buffer={utterance.audioBlob}
                   durationMs={utterance.durationMs}
                   sharedAudioRef={audioRef}
+                  onDelete={
+                    onDeleteAudio ? () => onDeleteAudio(message) : undefined
+                  }
+                  isDeleting={isDeleting}
                 />
               </div>
             )}
