@@ -308,18 +308,18 @@ function ConversationPage() {
       const history: ChatMessage[] = [
         ...(systemPrompt
           ? [
-            {
-              sessionId: activeSessionId ?? 0,
-              role: "system",
-              content: systemPrompt,
-              createdUtc: new Date().toISOString(),
-            } as ChatMessage,
-          ]
+              {
+                sessionId: activeSessionId ?? 0,
+                role: "system",
+                content: systemPrompt,
+                createdUtc: new Date().toISOString(),
+              } as ChatMessage,
+            ]
           : []),
         ...messages,
       ];
       const result = await callGemini(
-        "Provide a factual summary of the user’s progress toward their stated goal based solely on the conversation and constraints. List verifiable achievements and explain their direct contribution to goal advancement. Exclude encouragement, interpretation, or subjective language.",
+        "Provide a factual summary of the user's progress toward their stated goal based solely on the conversation and constraints. List verifiable achievements and explain their direct contribution to goal advancement. Exclude encouragement, interpretation, or subjective language.",
         normalizedSettings,
         history,
         undefined,
@@ -332,6 +332,7 @@ function ConversationPage() {
           achievementLog: plan,
         });
       }
+      pushToast("Achievements updated.", "success");
     }
     catch (error) {
       console.error(error);
@@ -490,7 +491,9 @@ function ConversationPage() {
                     <div>
                       <p className="text-sm font-semibold text-white">Achievement log</p>
                       <p className="text-xs text-slate-400">
-                        Snapshot of accomplishments based on this conversation.
+                        {isGeneratingAchievements
+                          ? "Hold tight—updating achievements…"
+                          : "Snapshot of accomplishments based on this conversation."}
                       </p>
                     </div>
                     <button
