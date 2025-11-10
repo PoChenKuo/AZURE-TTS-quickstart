@@ -8,7 +8,7 @@ type SessionSidebarProps = {
   activeSessionId: number | null;
   onSelect: (sessionId: number | null) => void;
   onNewChat: () => void;
-  onDelete: (sessionId: number) => void;
+  onDelete: (sessionId: number) => Promise<void> | void;
   onRename: (sessionId: number, title: string) => Promise<void> | void;
 };
 
@@ -23,6 +23,8 @@ export function SessionSidebar({
 }: SessionSidebarProps) {
   const [renamingId, setRenamingId] = useState<number | null>(null);
   const [renameValue, setRenameValue] = useState("");
+  const [pendingDelete, setPendingDelete] = useState<{ id: number; title: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   async function handleRenameSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -133,12 +135,12 @@ export function SessionSidebar({
                   onClick={(event) => {
                     event.stopPropagation();
                     if (session.id != null) {
-                      onDelete(session.id);
+                      setPendingDelete({ id: session.id, title: session.title });
                     }
                   }}
                   aria-label="Delete chat"
                 >
-                  ×
+                  Delete
                 </button>
               </div>
             </div>
@@ -148,6 +150,49 @@ export function SessionSidebar({
           <p className="text-sm text-slate-400 px-1 py-2">Creating your first chat...</p>
         )}
       </div>
+      {pendingDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-slate-900 p-5 shadow-2xl space-y-4">
+            <div>
+              <h3 className="text-lg font-semibold text-white">Delete chat?</h3>
+              <p className="text-sm text-slate-300">
+                This removes <span className="font-semibold text-white">{pendingDelete.title || "Untitled chat"}</span> and its cached audio. This action cannot be undone.
+              </p>
+            </div>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => {
+                  if (isDeleting) {
+                    return;
+                  }
+                  setPendingDelete(null);
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary bg-rose-600 hover:bg-rose-500 disabled:opacity-60"
+                disabled={isDeleting}
+                onClick={async () => {
+                  setIsDeleting(true);
+                  try {
+                    await Promise.resolve(onDelete(pendingDelete.id));
+                  }
+                  finally {
+                    setIsDeleting(false);
+                    setPendingDelete(null);
+                  }
+                }}
+              >
+                {isDeleting ? "Deleting..." : "Delete chat"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
   );
 }
