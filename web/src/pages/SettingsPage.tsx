@@ -232,6 +232,7 @@ function SettingsPage() {
           <p className="text-muted text-sm">{selectedGeminiModel.description}</p>
         </div>
 
+
         <div className="grid" style={{ gap: "0.4rem" }}>
           <label className="label">Cleanup Interval (minutes)</label>
           <input

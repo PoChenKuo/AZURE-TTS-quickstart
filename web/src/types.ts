@@ -68,4 +68,6 @@ export type ChatSession = {
   updatedUtc: string;
   sha256: string;
   geminiCache?: string;
+  goalPersona?: string;
+  customConstraints?: string;
 };

@@ -14,6 +14,7 @@ import {
   renameChatSession,
   setDefaultVoice,
   deleteChatAudio,
+  updateChatSessionDetails,
 } from "../db/actions";
 import { SessionSidebar } from "../components/SessionSidebar";
 import { ConversationLog } from "../components/ConversationLog";
@@ -24,7 +25,8 @@ import { useChatSessionSelection } from "../hooks/useChatSessionSelection";
 import { useConversationMutation } from "../hooks/useConversationMutation";
 import type { AppSettings, ChatMessage } from "../types";
 import { synthesizeAndStoreAssistantAudio } from "../lib/assistantAudio";
-import { DEFAULT_GEMINI_MODEL } from "../lib/gemini";
+import { callGemini, DEFAULT_GEMINI_MODEL } from "../lib/gemini";
+import { buildSystemPrompt } from "../lib/systemPrompt";
 import { pushToast } from "../state/toastStore";
 
 // Top-level conversation surface: wires reactive data + UI scaffolding while delegating heavy logic to hooks/components.
@@ -41,6 +43,12 @@ function ConversationPage() {
   const [deletingAudioIds, setDeletingAudioIds] = useState<Set<number>>(
     () => new Set()
   );
+  const [milestonePlan, setMilestonePlan] = useState<string | null>(null);
+  const [isGeneratingMilestones, setIsGeneratingMilestones] = useState(false);
+  const [goalDraft, setGoalDraft] = useState("");
+  const [constraintsDraft, setConstraintsDraft] = useState("");
+  const [isSavingSessionDetails, setIsSavingSessionDetails] = useState(false);
+  const [showContextEditor, setShowContextEditor] = useState(false);
   const autoPlayAudioRef = useRef<HTMLAudioElement>(null);
 
   const utteranceById = useMemo(() => {
@@ -62,6 +70,9 @@ function ConversationPage() {
     }
     return voices.find((voice) => voice.isDefault) ?? voices[0];
   }, [voices, settings?.defaultVoiceId]);
+  const normalizedSettings = settings
+    ? normalizeSettingsRecord(settings)
+    : undefined;
   const selectableVoices = useMemo(
     () => voices.filter((voice): voice is (typeof voices)[number] & { id: number } => voice.id != null),
     [voices]
@@ -76,7 +87,11 @@ function ConversationPage() {
 
   useEffect(() => {
     setSessionDetailsOpen(false);
-  }, [activeSessionId]);
+    const session = sessions?.find((item) => item.id === activeSessionId);
+    setGoalDraft(session?.goalPersona ?? "");
+    setConstraintsDraft(session?.customConstraints ?? "");
+    setShowContextEditor(false);
+  }, [activeSessionId, sessions]);
 
   const messageMutation = useConversationMutation({
     settings,
@@ -157,12 +172,11 @@ function ConversationPage() {
     if (message.role !== "assistant" || !message.id) {
       return;
     }
-    if (!settings) {
+    if (!normalizedSettings) {
       pushToast("Save your Gemini settings before regenerating audio.", "info");
       return;
     }
-    const preparedSettings = normalizeSettingsRecord(settings);
-    if (!preparedSettings.geminiKey || !preparedSettings.endpoint) {
+    if (!normalizedSettings.geminiKey || !normalizedSettings.endpoint) {
       pushToast("Gemini settings are incomplete.", "info");
       return;
     }
@@ -170,7 +184,7 @@ function ConversationPage() {
     try {
       await synthesizeAndStoreAssistantAudio({
         text: message.content,
-        settings: preparedSettings,
+        settings: normalizedSettings,
         defaultVoice,
         assistantId: message.id,
         requestId: message.geminiMeta?.requestId ?? undefined,
@@ -214,6 +228,74 @@ function ConversationPage() {
     }
   }
 
+  async function handleSaveSessionDetails() {
+    if (!activeSession?.id) {
+      return;
+    }
+    setIsSavingSessionDetails(true);
+    try {
+      await updateChatSessionDetails(activeSession.id, {
+        goalPersona: goalDraft.trim(),
+        customConstraints: constraintsDraft.trim(),
+      });
+      pushToast("Updated chat goal & constraints.", "success");
+      setShowContextEditor(false);
+    }
+    catch (error) {
+      console.error(error);
+      pushToast("Failed to save chat details.", "error");
+    }
+    finally {
+      setIsSavingSessionDetails(false);
+    }
+  }
+
+  async function handleGenerateMilestones() {
+    if (!normalizedSettings?.geminiKey) {
+      pushToast("Add your Gemini key in Settings first.", "info");
+      return;
+    }
+    if (!messages.length) {
+      pushToast("Start a conversation before generating milestones.", "info");
+      return;
+    }
+    setIsGeneratingMilestones(true);
+    try {
+    const systemPrompt = buildSystemPrompt(
+      activeSession?.goalPersona,
+      activeSession?.customConstraints
+    );
+      const history: ChatMessage[] = [
+        ...(systemPrompt
+          ? [
+              {
+                sessionId: activeSessionId ?? 0,
+                role: "system",
+                content: systemPrompt,
+                createdUtc: new Date().toISOString(),
+              } as ChatMessage,
+            ]
+          : []),
+        ...messages,
+      ];
+      const result = await callGemini(
+        "Review the conversation and propose 3-5 concrete milestones that move the user toward their goal. Each milestone should include a short label and 1-2 actionable bullet points. Finish with one sentence encouraging the user.",
+        normalizedSettings,
+        history,
+        undefined,
+        normalizedSettings.geminiModel ?? DEFAULT_GEMINI_MODEL
+      );
+      setMilestonePlan(result.text.trim());
+    }
+    catch (error) {
+      console.error(error);
+      pushToast("Failed to generate milestones.", "error");
+    }
+    finally {
+      setIsGeneratingMilestones(false);
+    }
+  }
+
   return (
     <div className="flex gap-5 h-[calc(100vh-160px)] min-h-0 overflow-hidden max-lg:flex-col max-lg:h-auto max-lg:overflow-visible">
       <SessionSidebar
@@ -229,9 +311,26 @@ function ConversationPage() {
         <div className="card flex h-full min-h-0 flex-col gap-5">
           <header className="flex flex-wrap items-start justify-between gap-4">
             <div className="space-y-1 flex justify-between w-full items-center">
-              <h2 className="text-2xl font-semibold text-white truncate">
-                {activeSession?.title?.trim() || "Conversation"}
-              </h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-2xl font-semibold text-white truncate">
+                  {activeSession?.title?.trim() || "Conversation"}
+                </h2>
+                {activeSession && (
+                  <button
+                    type="button"
+                    className={clsx(
+                      "inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/20 text-white hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300",
+                      showContextEditor ? "bg-white/10" : ""
+                    )}
+                    aria-label="Edit chat goal and constraints"
+                    onClick={() =>
+                      setShowContextEditor((prev) => !prev)
+                    }
+                  >
+                    ⚙️
+                  </button>
+                )}
+              </div>
               {activeSession && (
                 <div
                   className="relative ml-auto"
@@ -281,10 +380,67 @@ function ConversationPage() {
             </div>
           </header>
 
+          {activeSession && showContextEditor && (
+            <div className="grid gap-3 rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+              <div className="grid gap-1">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-300">
+                  Goal / Persona
+                </label>
+                <textarea
+                  className="rounded-xl border border-white/15 bg-transparent px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
+                  placeholder="Describe what you're trying to achieve in this chat."
+                  value={goalDraft}
+                  onChange={(e) => setGoalDraft(e.target.value)}
+                  rows={2}
+                />
+              </div>
+              <div className="grid gap-1">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-300">
+                  Constraints &amp; Guidelines
+                </label>
+                <textarea
+                  className="rounded-xl border border-white/15 bg-transparent px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
+                  placeholder="List tone, boundaries, or requirements for this conversation."
+                  value={constraintsDraft}
+                  onChange={(e) => setConstraintsDraft(e.target.value)}
+                  rows={2}
+                />
+              </div>
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  className="text-sm text-slate-400 hover:text-white"
+                  onClick={() => {
+                    setGoalDraft(activeSession.goalPersona ?? "");
+                    setConstraintsDraft(activeSession.customConstraints ?? "");
+                  }}
+                >
+                  Reset
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={handleSaveSessionDetails}
+                  disabled={isSavingSessionDetails}
+                >
+                  {isSavingSessionDetails ? "Saving..." : "Save"}
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className="flex flex-wrap items-center justify-between gap-4">
             <span className="text-sm text-slate-200 flex items-center gap-2">
               Assistant audio auto-plays on each response.
             </span>
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 rounded-full border border-white/20 px-4 py-1 text-sm text-white hover:bg-white/10 disabled:opacity-60"
+              onClick={handleGenerateMilestones}
+              disabled={isGeneratingMilestones}
+            >
+              {isGeneratingMilestones ? "Generating..." : "Generate milestones"}
+            </button>
             {selectableVoices.length > 0 && (
               <label className="voice-select inline-flex items-center gap-3 rounded-full border border-white/20 px-3 py-1 text-sm text-white">
                 <span className="text-xs uppercase tracking-wide text-slate-300">
@@ -321,6 +477,27 @@ function ConversationPage() {
               aria-label="Assistant playback"
             />
           </div>
+
+          {milestonePlan && (
+            <div className="rounded-2xl border border-white/15 bg-slate-900/80 p-4 shadow-inner shadow-black/30 space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-white">Milestone plan</p>
+                  <p className="text-xs text-slate-400">
+                    Summarized from the current conversation.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="text-xs text-slate-400 hover:text-white"
+                  onClick={() => setMilestonePlan(null)}
+                >
+                  Clear
+                </button>
+              </div>
+              <pre className="whitespace-pre-wrap text-sm text-slate-100 bg-slate-950/70 rounded-xl p-3 overflow-x-auto">{milestonePlan}</pre>
+            </div>
+          )}
 
           <ConversationLog
             messages={messages}

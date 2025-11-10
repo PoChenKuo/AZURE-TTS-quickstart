@@ -77,6 +77,26 @@ export class AppDatabase extends Dexie {
           await table.update(1, { geminiModel: DEFAULT_GEMINI_MODEL });
         }
       });
+    this.version(5)
+      .stores({
+        settings: "id",
+        voices: "++id, name, locale, isDefault",
+        utterances: "++id, expiresUtc, createdUtc",
+        chats: "++id, sessionId, createdUtc",
+        workerLogs: "++id, createdUtc",
+        chatSessions: "++id, updatedUtc",
+      })
+      .upgrade(async (tx) => {
+        const table = tx.table("chatSessions");
+        await table.toCollection().modify((session: ChatSession) => {
+          if (typeof session.goalPersona === "undefined") {
+            session.goalPersona = "";
+          }
+          if (typeof session.customConstraints === "undefined") {
+            session.customConstraints = "";
+          }
+        });
+      });
   }
 }
 

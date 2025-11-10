@@ -124,6 +124,19 @@ export async function renameChatSession(id: number, title: string) {
   });
 }
 
+export async function updateChatSessionDetails(
+  id: number,
+  details: {
+    goalPersona?: string;
+    customConstraints?: string;
+  }
+) {
+  await db.chatSessions.update(id, {
+    ...details,
+    updatedUtc: new Date().toISOString(),
+  });
+}
+
 export async function deleteChatSession(id: number) {
   const messages = await db.chats.where("sessionId").equals(id).toArray();
   const utteranceIds = messages

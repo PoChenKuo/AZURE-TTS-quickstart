@@ -7,6 +7,7 @@ import {
   type GeminiCallOptions,
   DEFAULT_GEMINI_MODEL,
 } from "../lib/gemini";
+import { buildSystemPrompt } from "../lib/systemPrompt";
 import {
   type SessionGeminiCacheState,
   serializeSessionGeminiCacheState,
@@ -60,7 +61,7 @@ export function useConversationMutation({
       }
 
       const preparedSettings = normalizeSettings(settings);
-      await recordUserMessage(sessionId, trimmed);
+      const userEntry = await recordUserMessage(sessionId, trimmed);
       const cacheContext = buildCacheContext(
         messages,
         sessionCacheState,
@@ -70,9 +71,11 @@ export function useConversationMutation({
       const { reply, meta } = await getAssistantReply({
         prompt: trimmed,
         settings: preparedSettings,
+        userEntry,
         sessionId,
         cacheContext,
         sessionCacheState,
+        activeSession,
       });
       const assistantId = await addChatMessage({
         sessionId,
@@ -162,17 +165,35 @@ function buildCacheContext(
 async function getAssistantReply({
   prompt,
   settings,
+  userEntry,
   sessionId,
   cacheContext,
   sessionCacheState,
+  activeSession,
 }: {
   prompt: string;
   settings: AppSettings;
+  userEntry: ChatMessage;
   sessionId: number;
   cacheContext: CacheContext;
   sessionCacheState?: SessionGeminiCacheState;
+  activeSession?: ChatSession;
 }) {
-  const liveHistory = cacheContext.recentHistory;
+  const systemPrompt = buildSystemPrompt(
+    activeSession?.goalPersona,
+    activeSession?.customConstraints
+  );
+  const systemMessage = systemPrompt
+    ? [
+        {
+          sessionId,
+          role: "system" as const,
+          content: systemPrompt,
+          createdUtc: new Date().toISOString(),
+        } satisfies ChatMessage,
+      ]
+    : [];
+  const liveHistory = [...systemMessage, ...cacheContext.recentHistory, userEntry];
   try {
     const result = await callGemini(
       prompt,
