@@ -1,8 +1,8 @@
 import type { ChatMessage } from "../types";
 import { hashText } from "./helpers";
 
-export const HISTORY_LIMIT = 60;
-export const RECENT_HISTORY_WINDOW = 60;
+export const HISTORY_LIMIT = 20;
+export const RECENT_HISTORY_WINDOW = 20;
 export const CACHE_TTL_SECONDS = 60 * 60; // 1 hour
 
 // Keeps the heavy context small enough for caching while leaving the most recent turns inline.

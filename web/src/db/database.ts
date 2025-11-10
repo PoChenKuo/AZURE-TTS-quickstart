@@ -10,6 +10,7 @@ import type {
 } from "../types";
 import { defaultSettings, defaultVoiceProfiles } from "./defaults";
 import { sha256Hex } from "../lib/helpers";
+import { DEFAULT_GEMINI_MODEL } from "../lib/gemini";
 
 export class AppDatabase extends Dexie {
   settings!: Table<AppSettings, number>;
@@ -58,6 +59,22 @@ export class AppDatabase extends Dexie {
           if (Object.keys(updates).length) {
             await table.update(session.id!, updates);
           }
+        }
+      });
+    this.version(4)
+      .stores({
+        settings: "id",
+        voices: "++id, name, locale, isDefault",
+        utterances: "++id, expiresUtc, createdUtc",
+        chats: "++id, sessionId, createdUtc",
+        workerLogs: "++id, createdUtc",
+        chatSessions: "++id, updatedUtc",
+      })
+      .upgrade(async (tx) => {
+        const table = tx.table("settings");
+        const record = await table.get(1);
+        if (record && !record.geminiModel) {
+          await table.update(1, { geminiModel: DEFAULT_GEMINI_MODEL });
         }
       });
   }

@@ -4,7 +4,11 @@ import { useSettingsRecord, useVoices } from "../db/hooks";
 import { saveSettings, setDefaultVoice } from "../db/actions";
 import type { AppSettings } from "../types";
 import { pushToast } from "../state/toastStore";
-import { callGemini } from "../lib/gemini";
+import {
+  callGemini,
+  GEMINI_MODEL_OPTIONS,
+  DEFAULT_GEMINI_MODEL,
+} from "../lib/gemini";
 import { synthesizeWithAzure } from "../lib/azureSpeech";
 import { createAudioUrl, generateToneWav } from "../lib/audio";
 
@@ -13,6 +17,7 @@ type FormState = {
   endpoint: string;
   region: string;
   geminiKey: string;
+  geminiModel: string;
   cleanupIntervalMinutes: number;
   encryptionEnabled: boolean;
   defaultVoiceId?: number;
@@ -23,6 +28,7 @@ const EMPTY_STATE: FormState = {
   endpoint: "",
   region: "",
   geminiKey: "",
+  geminiModel: DEFAULT_GEMINI_MODEL,
   cleanupIntervalMinutes: 5,
   encryptionEnabled: false,
   defaultVoiceId: undefined,
@@ -43,6 +49,7 @@ function SettingsPage() {
         endpoint: settings.endpoint ?? "",
         region: settings.region ?? "",
         geminiKey: settings.geminiKey ?? "",
+        geminiModel: settings.geminiModel ?? DEFAULT_GEMINI_MODEL,
         cleanupIntervalMinutes: settings.cleanupIntervalMinutes ?? 5,
         encryptionEnabled: settings.encryptionEnabled ?? false,
         defaultVoiceId: settings.defaultVoiceId,
@@ -60,12 +67,20 @@ function SettingsPage() {
     return voices.find((voice) => voice.isDefault) ?? voices[0];
   }, [voices, form.defaultVoiceId]);
 
+  const selectedGeminiModel = useMemo(() => {
+    return (
+      GEMINI_MODEL_OPTIONS.find((model) => model.id === form.geminiModel) ??
+      GEMINI_MODEL_OPTIONS[0]
+    );
+  }, [form.geminiModel]);
+
   const effectiveSettings: AppSettings = {
     id: 1,
     speechKey: form.speechKey.trim() || undefined,
     endpoint: form.endpoint.trim() || undefined,
     region: form.region.trim() || undefined,
     geminiKey: form.geminiKey.trim() || undefined,
+    geminiModel: form.geminiModel || DEFAULT_GEMINI_MODEL,
     cleanupIntervalMinutes: form.cleanupIntervalMinutes || 5,
     encryptionEnabled: form.encryptionEnabled,
     defaultVoiceId: form.defaultVoiceId,
@@ -129,7 +144,13 @@ function SettingsPage() {
   async function handleTestGemini() {
     setIsTestingGemini(true);
     try {
-      const result = await callGemini("Say hello from Gemini.", effectiveSettings);
+      const result = await callGemini(
+        "Say hello from Gemini.",
+        effectiveSettings,
+        [],
+        undefined,
+        form.geminiModel || DEFAULT_GEMINI_MODEL
+      );
       pushToast(`Gemini replied: ${result.text.slice(0, 60)}...`, "success");
     }
     catch (error) {
@@ -193,6 +214,22 @@ function SettingsPage() {
             value={form.geminiKey}
             onChange={(e) => handleChange("geminiKey", e.target.value)}
           />
+        </div>
+
+        <div className="grid" style={{ gap: "0.4rem" }}>
+          <label className="label">Gemini Model</label>
+          <select
+            className="input"
+            value={form.geminiModel}
+            onChange={(e) => handleChange("geminiModel", e.target.value)}
+          >
+            {GEMINI_MODEL_OPTIONS.map((model) => (
+              <option key={model.id} value={model.id}>
+                {model.label}
+              </option>
+            ))}
+          </select>
+          <p className="text-muted text-sm">{selectedGeminiModel.description}</p>
         </div>
 
         <div className="grid" style={{ gap: "0.4rem" }}>

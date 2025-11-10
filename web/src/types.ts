@@ -4,6 +4,7 @@ export type AppSettings = {
   endpoint?: string;
   region?: string;
   geminiKey?: string;
+  geminiModel?: string;
   cleanupIntervalMinutes: number;
   defaultVoiceId?: number;
   encryptionEnabled: boolean;

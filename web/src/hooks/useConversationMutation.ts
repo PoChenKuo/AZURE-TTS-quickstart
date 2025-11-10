@@ -2,7 +2,11 @@ import { useMutation } from "@tanstack/react-query";
 import type { ChatMessage, ChatSession, VoiceProfile, AppSettings } from "../types";
 import { pushToast } from "../state/toastStore";
 import { addChatMessage, saveSessionGeminiCache } from "../db/actions";
-import { callGemini, type GeminiCallOptions } from "../lib/gemini";
+import {
+  callGemini,
+  type GeminiCallOptions,
+  DEFAULT_GEMINI_MODEL,
+} from "../lib/gemini";
 import {
   type SessionGeminiCacheState,
   serializeSessionGeminiCacheState,
@@ -56,7 +60,7 @@ export function useConversationMutation({
       }
 
       const preparedSettings = normalizeSettings(settings);
-      const userEntry = await recordUserMessage(sessionId, trimmed);
+      await recordUserMessage(sessionId, trimmed);
       const cacheContext = buildCacheContext(
         messages,
         sessionCacheState,
@@ -66,7 +70,6 @@ export function useConversationMutation({
       const { reply, meta } = await getAssistantReply({
         prompt: trimmed,
         settings: preparedSettings,
-        userEntry,
         sessionId,
         cacheContext,
         sessionCacheState,
@@ -106,6 +109,7 @@ function normalizeSettings(settings: AppSettings) {
     ...settings,
     speechKey: settings.speechKey ?? undefined,
     endpoint: settings.endpoint ?? undefined,
+    geminiModel: settings.geminiModel ?? DEFAULT_GEMINI_MODEL,
   };
 }
 
@@ -158,25 +162,24 @@ function buildCacheContext(
 async function getAssistantReply({
   prompt,
   settings,
-  userEntry,
   sessionId,
   cacheContext,
   sessionCacheState,
 }: {
   prompt: string;
   settings: AppSettings;
-  userEntry: ChatMessage;
   sessionId: number;
   cacheContext: CacheContext;
   sessionCacheState?: SessionGeminiCacheState;
 }) {
-  const liveHistory = [...cacheContext.recentHistory, userEntry];
+  const liveHistory = cacheContext.recentHistory;
   try {
     const result = await callGemini(
       prompt,
       settings,
       liveHistory,
-      cacheContext.options
+      cacheContext.options,
+      settings.geminiModel
     );
     await persistCacheState({
       sessionId,

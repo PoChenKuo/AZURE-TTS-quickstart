@@ -24,6 +24,7 @@ import { useChatSessionSelection } from "../hooks/useChatSessionSelection";
 import { useConversationMutation } from "../hooks/useConversationMutation";
 import type { AppSettings, ChatMessage } from "../types";
 import { synthesizeAndStoreAssistantAudio } from "../lib/assistantAudio";
+import { DEFAULT_GEMINI_MODEL } from "../lib/gemini";
 import { pushToast } from "../state/toastStore";
 
 // Top-level conversation surface: wires reactive data + UI scaffolding while delegating heavy logic to hooks/components.
@@ -350,5 +351,6 @@ function normalizeSettingsRecord(settings: AppSettings): AppSettings {
     ...settings,
     speechKey: settings.speechKey ?? undefined,
     endpoint: settings.endpoint ?? undefined,
+    geminiModel: settings.geminiModel ?? DEFAULT_GEMINI_MODEL,
   };
 }

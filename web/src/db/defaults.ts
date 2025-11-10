@@ -1,9 +1,11 @@
 import type { AppSettings, VoiceProfile } from "../types";
+import { DEFAULT_GEMINI_MODEL } from "../lib/gemini";
 
 export const defaultSettings: AppSettings = {
   id: 1,
   cleanupIntervalMinutes: 5,
   encryptionEnabled: false,
+  geminiModel: DEFAULT_GEMINI_MODEL,
 };
 
 export const defaultVoiceProfiles: VoiceProfile[] = [
