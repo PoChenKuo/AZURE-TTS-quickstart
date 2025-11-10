@@ -108,3 +108,59 @@ node src/main.js
 ## Voice Selection
 
 The sample defaults to the `zh-TW-HsiaoChenNeural` voice. You can change `speechConfig.speechSynthesisVoiceName` in `src/synthesis.js` to any supported Azure AI Foundry speech voice. See the catalog at https://learn.microsoft.com/en-us/azure/ai-services/speech-service/openai-voices for available options and IDs.
+
+## Browser SPA (client-only web prototype)
+
+A companion web experience now lives under `web/`. It is a Vite + React + TypeScript single-page app that keeps everything client-side:
+
+- IndexedDB (via Dexie) stores settings, voices, chats, worker logs, audio blobs, and per-chat metadata (SHA-256 IDs + Gemini cache text).
+- Three routes are available: `/settings`, `/manager`, and `/conversation`.
+- Gemini replies can be turned into audio previews via Azure Speech REST or a local waveform fallback when Azure credentials are missing.
+- The Conversation page now ships with a ChatGPT-style session list so you can juggle multiple chats, rename them, and inspect their metadata instantly.
+
+### Run locally
+
+```bash
+cd web
+npm install        # first run only
+npm run dev        # launches Vite dev server on http://localhost:5173
+```
+
+For a production build (used by CI/local smoke tests):
+
+```bash
+cd web
+npm run build
+npm run preview    # optional: serves the dist build locally
+```
+
+Settings, voices, and audio blobs stay in your browser profile. Use the **Settings** page to paste keys/endpoints before heading to the **Conversation** tab.
+
+#### Conversation cache chain (web/)
+
+1. `useChatSessionSelection` (web/src/hooks/useChatSessionSelection.ts) keeps a per-tab `activeSessionId`, bootstraps a session if none exist, and ensures the current selection always points to a live `chatSessions` row.
+2. Each session row stores a serialized cache descriptor `{ name, hash }` in `chatSessions.geminiCache`. `parseSessionGeminiCacheState` surfaces that metadata so the Conversation header can display the active `cachedContents/...` resource.
+3. When the user sends a prompt, `useConversationMutation` (web/src/hooks/useConversationMutation.ts) slices the history via `partitionHistoryForCache` / `fingerprintHistory` (web/src/lib/conversationHistory.ts). The hash distinguishes one chat's cached prefix from another, even if their text briefly matches.
+4. The hook builds `GeminiCallOptions`: if the stored hash matches the freshly computed one, the cached content name is reused; otherwise it is omitted so `callGemini` is forced to mint a new cache.
+5. `callGemini` (web/src/lib/gemini.ts) creates the cache with `ai.caches.create`, attaches the returned name through `config.cachedContent`, and automatically retries when Gemini reports an expired cache. Every chat therefore references only its own cached context.
+6. On success, `useConversationMutation` persists the new `{ name, hash }` pair via `saveSessionGeminiCache`, keeping Dexie in sync. When a chat is deleted, its cache pointer disappears with the row, so other sessions remain unaffected.
+
+This chain keeps the cache lifecycle transparent (displayed in the UI), resilient (auto-refresh on expiry), and scoped per chat without any server components.
+
+#### Web workflow (high-level architecture)
+
+1. **State + storage**  
+   - Dexie models (`web/src/db/database.ts`) back all persistent data: settings, sessions, chats, audio blobs, worker logs.  
+   - React components subscribe through `use*` hooks in `web/src/db/hooks.ts`, so UI re-renders whenever IndexedDB changes.
+2. **User interaction loop**  
+   - ConversationPage (`web/src/pages/ConversationPage.tsx`) wires store data, selection state, and UI-only controls (autoplay, composer) while delegating complex behavior to hooks.  
+   - SessionSidebar (`web/src/components/SessionSidebar.tsx`) handles CRUD on chat rows; MessageComposer emits submit events; ConversationLog renders messages/audio previews.
+3. **Request pipeline**  
+   - `useConversationMutation` accepts a prompt, partitions history (`web/src/lib/conversationHistory.ts`), and calls `callGemini` with cache-aware options.  
+   - Responses persist through `db/actions` (new chat rows, Dexie-backed audio via `storeUtterance`) and wire to autoplay via `useAutoPlayAssistantAudio`.
+4. **Speech synthesis**  
+   - Azure path (`web/src/lib/azureSpeech.ts`) returns raw WAV buffers into the same storage flow; fallback tone generation lives in `web/src/lib/audio.ts`.
+5. **UI feedback**  
+   - Toasts are dispatched from hooks (`pushToast`) for error paths, while the Conversation header shows deterministic session metadata (hash, cache id) pulled from Dexie.
+
+This workflow means a single prompt travels through React state → Dexie mutation → Gemini/Azure libraries → Dexie → UI/autoplay, with every step encapsulated behind dedicated hooks or helpers.
