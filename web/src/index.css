@@ -3,7 +3,8 @@
 @tailwind utilities;
 
 :root {
-  font-family: "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont,
+    sans-serif;
   color: #e2e8f0;
   background-color: #0f172a;
   line-height: 1.5;
@@ -121,6 +122,11 @@ select {
   box-shadow: 0 20px 45px rgba(2, 6, 23, 0.6);
 }
 
+@media screen and (max-width: 640px) {
+  .card {
+    padding: 0rem;
+  }
+}
 .grid {
   display: grid;
   gap: 1.5rem;
@@ -452,7 +458,8 @@ select {
 }
 
 .markdown-body code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
   background: rgba(148, 163, 184, 0.15);
   padding: 0.05rem 0.35rem;
   border-radius: 6px;

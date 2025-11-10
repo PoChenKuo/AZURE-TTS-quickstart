@@ -370,7 +370,7 @@ function ConversationPage() {
       />
 
       <section className="flex-1 min-h-0">
-        <div className="card flex h-full min-h-0 flex-col gap-5 sm-pl-0 sm-pr-0">
+        <div className="card flex h-full min-h-0 flex-col gap-5">
           <header className="flex flex-wrap items-start justify-between gap-4">
             <div className="space-y-1 flex justify-between w-full items-center">
               <div className="flex items-center gap-2">
