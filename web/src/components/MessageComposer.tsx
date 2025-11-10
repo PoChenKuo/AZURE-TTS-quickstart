@@ -1,4 +1,5 @@
 import type { FormEvent } from "react";
+import { useTranslation } from "react-i18next";
 
 type MessageComposerProps = {
   value: string;
@@ -20,6 +21,7 @@ export function MessageComposer({
   playbackRate = 1,
   onPlaybackRateChange,
 }: MessageComposerProps) {
+  const { t } = useTranslation();
   const playbackOptions = Array.from({ length: 11 }, (_, index) =>
     (0.5 + index * 0.25).toFixed(2)
   );
@@ -29,7 +31,7 @@ export function MessageComposer({
       <textarea
         className="input"
         rows={4}
-        placeholder="Ask Gemini anything..."
+        placeholder={t("composer.placeholder")}
         value={value}
         maxLength={maxLength}
         onChange={(e) => onChange(e.target.value)}
@@ -43,7 +45,7 @@ export function MessageComposer({
           </span>
           {onPlaybackRateChange && (
             <label className="flex items-center gap-1 text-xs uppercase tracking-wide text-slate-400">
-              <span>Speed</span>
+              <span>{t("composer.speed")}</span>
               <select
                 className="playback-select rounded-full border border-white/20 px-2 py-1 text-xs focus:outline-none"
                 value={playbackRate.toFixed(2)}
@@ -59,7 +61,7 @@ export function MessageComposer({
           )}
         </div>
         <button className="btn btn-primary" type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Sending..." : "Send"}
+          {isSubmitting ? t("composer.sending") : t("composer.send")}
         </button>
       </div>
     </form>

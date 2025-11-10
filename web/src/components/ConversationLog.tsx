@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { useRef } from "react";
 import type { RefObject } from "react";
+import { useTranslation } from "react-i18next";
 import { AudioPreview } from "./AudioPreview";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -36,11 +37,12 @@ export function ConversationLog({
   const audioRef =
     (sharedAudioRef as RefObject<HTMLAudioElement | null> | undefined) ??
     fallbackAudioRef;
+  const { t } = useTranslation();
 
   if (!messages.length) {
     return (
       <div className={clsx("flex flex-col gap-4", className)}>
-        <p className="text-sm text-slate-400">No messages yet. Say hello to Gemini!</p>
+        <p className="text-sm text-slate-400">{t("conversation.empty")}</p>
       </div>
     );
   }

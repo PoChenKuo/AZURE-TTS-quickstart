@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { RefObject } from "react";
+import { useTranslation } from "react-i18next";
 import { createAudioUrl } from "../lib/audio";
 
 type AudioPreviewProps = {
@@ -23,6 +24,7 @@ export function AudioPreview({
   const localAudioRef = useRef<HTMLAudioElement | null>(null);
   const audioRef = sharedAudioRef ?? localAudioRef;
   const [isPlaying, setIsPlaying] = useState(false);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const element = audioRef.current;
@@ -93,9 +95,7 @@ export function AudioPreview({
   };
 
   const label =
-    typeof durationMs === "number"
-      ? formatDuration(durationMs)
-      : "Play audio";
+    typeof durationMs === "number" ? formatDuration(durationMs) : t("audio.playLabel");
 
   return (
     <div className="inline-flex flex-wrap items-center gap-3 text-xs text-slate-300">
@@ -134,3 +134,4 @@ function formatDuration(durationMs: number) {
   const secs = seconds % 60;
   return `${mins}:${secs.toString().padStart(2, "0")}`;
 }
+

@@ -5,7 +5,7 @@ export function buildSystemPrompt(goal?: string, constraints?: string) {
     return undefined;
   }
 
-  const lines: string[] = [];
+  const lines: string[] = ["[Goal - very important]"];
   if (trimmedGoal) {
     lines.push(
       `Persona / Goal: ${trimmedGoal}`

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import clsx from "clsx";
+import { useTranslation } from "react-i18next";
 import type { ChatSession } from "../types";
 
 type SessionSidebarProps = {
@@ -25,6 +26,7 @@ export function SessionSidebar({
   const [renameValue, setRenameValue] = useState("");
   const [pendingDelete, setPendingDelete] = useState<{ id: number; title: string } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const { t } = useTranslation();
 
   async function handleRenameSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -50,7 +52,7 @@ export function SessionSidebar({
   return (
     <aside className="w-64 max-w-full rounded-2xl border border-white/10 bg-slate-900/60 p-4 flex flex-col gap-3 h-fit max-lg:w-full">
       <button className="btn btn-secondary w-full" type="button" onClick={onNewChat}>
-        + New chat
+        {t("sidebar.newChat")}
       </button>
       <div className="flex flex-col gap-2 max-h-[70vh] overflow-y-auto pr-1">
         {(sessions ?? []).map((session) => {
@@ -92,7 +94,7 @@ export function SessionSidebar({
                         type="submit"
                         className="rounded-full bg-sky-600 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white hover:bg-sky-500"
                       >
-                        Save
+                        {t("sidebar.save")}
                       </button>
                       <button
                         type="button"
@@ -102,7 +104,7 @@ export function SessionSidebar({
                           setRenamingId(null);
                         }}
                       >
-                        Cancel
+                        {t("sidebar.cancel")}
                       </button>
                     </div>
                   </form>
@@ -125,9 +127,9 @@ export function SessionSidebar({
                     event.stopPropagation();
                     startRenaming(session.id, session.title);
                   }}
-                  aria-label="Rename chat"
+                  aria-label={t("sidebar.rename")}
                 >
-                  Rename
+                  {t("sidebar.rename")}
                 </button>
                 <button
                   type="button"
@@ -138,25 +140,27 @@ export function SessionSidebar({
                       setPendingDelete({ id: session.id, title: session.title });
                     }
                   }}
-                  aria-label="Delete chat"
+                  aria-label={t("sidebar.delete")}
                 >
-                  Delete
+                  {t("sidebar.delete")}
                 </button>
               </div>
             </div>
           );
         })}
         {!sessions?.length && (
-          <p className="text-sm text-slate-400 px-1 py-2">Creating your first chat...</p>
+          <p className="text-sm text-slate-400 px-1 py-2">{t("sidebar.empty")}</p>
         )}
       </div>
       {pendingDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4">
           <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-slate-900 p-5 shadow-2xl space-y-4">
             <div>
-              <h3 className="text-lg font-semibold text-white">Delete chat?</h3>
+              <h3 className="text-lg font-semibold text-white">{t("sidebar.deleteTitle")}</h3>
               <p className="text-sm text-slate-300">
-                This removes <span className="font-semibold text-white">{pendingDelete.title || "Untitled chat"}</span> and its cached audio. This action cannot be undone.
+                {t("sidebar.deleteBody", {
+                  title: pendingDelete.title || t("conversation.titleFallback"),
+                })}
               </p>
             </div>
             <div className="flex justify-end gap-3">
@@ -170,7 +174,7 @@ export function SessionSidebar({
                   setPendingDelete(null);
                 }}
               >
-                Cancel
+                {t("common.cancel")}
               </button>
               <button
                 type="button"
@@ -187,7 +191,7 @@ export function SessionSidebar({
                   }
                 }}
               >
-                {isDeleting ? "Deleting..." : "Delete chat"}
+                {isDeleting ? t("common.loading") : t("sidebar.deleteAction")}
               </button>
             </div>
           </div>
