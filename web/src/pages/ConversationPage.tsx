@@ -229,8 +229,8 @@ function ConversationPage() {
         <div className="card flex h-full min-h-0 flex-col gap-5">
           <header className="flex flex-wrap items-start justify-between gap-4">
             <div className="space-y-1 flex justify-between w-full items-center">
-              <h2 className="text-2xl font-semibold text-white">
-                <p>Conversation</p>
+              <h2 className="text-2xl font-semibold text-white truncate">
+                {activeSession?.title?.trim() || "Conversation"}
               </h2>
               {activeSession && (
                 <div
