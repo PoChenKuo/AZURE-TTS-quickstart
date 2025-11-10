@@ -29,6 +29,7 @@ export type UtteranceRecord = {
   text: string;
   voiceId?: number;
   audioBlob: ArrayBuffer;
+  durationMs?: number;
   size: number;
   createdUtc: string;
   expiresUtc: string;

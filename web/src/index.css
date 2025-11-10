@@ -304,3 +304,22 @@ select {
   font-size: 1.1rem;
   cursor: pointer;
 }
+
+.markdown-body strong {
+  font-weight: 700;
+}
+
+.markdown-body em {
+  font-style: italic;
+}
+
+.markdown-body code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  background: rgba(148, 163, 184, 0.15);
+  padding: 0.05rem 0.35rem;
+  border-radius: 6px;
+}
+
+.markdown-body p {
+  margin: 0.2rem 0;
+}

@@ -13,7 +13,8 @@ export function useAutoPlayAssistantAudio(
 ) {
   type SessionKey = number | "global";
   const lastSessionKeyRef = useRef<SessionKey | null>(null);
-  const lastPlayedMapRef = useRef<Map<SessionKey, number | undefined>>(new Map());
+  const lastPlayedMapRef = useRef<Map<SessionKey, string>>(new Map());
+  const lastUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
     const sessionKey: SessionKey = activeSessionId ?? "global";
@@ -22,9 +23,15 @@ export function useAutoPlayAssistantAudio(
         .reverse()
         .find((msg) => msg.role === "assistant");
       if (placeholder?.id) {
-        lastPlayedMapRef.current.set(sessionKey, placeholder.id);
+        const placeholderKey = buildPlaybackKey(
+          placeholder.id,
+          placeholder.linkedUtteranceId
+        );
+        lastPlayedMapRef.current.set(sessionKey, placeholderKey);
       }
-      lastSessionKeyRef.current = sessionKey;
+      if (messages.length) {
+        lastSessionKeyRef.current = sessionKey;
+      }
       return;
     }
 
@@ -43,20 +50,19 @@ export function useAutoPlayAssistantAudio(
 
     const lastSessionKey = lastSessionKeyRef.current;
     lastSessionKeyRef.current = sessionKey;
-    const lastPlayedId = lastPlayedMapRef.current.get(sessionKey);
+    const playbackKey = buildPlaybackKey(
+      latestAssistant.id,
+      latestAssistant.linkedUtteranceId
+    );
+    const lastPlayedKey = lastPlayedMapRef.current.get(sessionKey);
     if (lastSessionKey !== sessionKey) {
-      if (latestAssistant.id != null) {
-        lastPlayedMapRef.current.set(sessionKey, latestAssistant.id);
-      }
+      lastPlayedMapRef.current.set(sessionKey, playbackKey);
       return;
     }
-    if (latestAssistant.id == null) {
+    if (lastPlayedKey === playbackKey) {
       return;
     }
-    if (lastPlayedId === latestAssistant.id) {
-      return;
-    }
-    lastPlayedMapRef.current.set(sessionKey, latestAssistant.id);
+    lastPlayedMapRef.current.set(sessionKey, playbackKey);
 
     const url = createAudioUrl(utterance.audioBlob);
     const element = audioRef?.current ?? undefined;
@@ -68,10 +74,12 @@ export function useAutoPlayAssistantAudio(
         .catch(() => {
           /* ignore autoplay restrictions */
         });
+      if (lastUrlRef.current) {
+        // URL.revokeObjectURL(lastUrlRef.current);
+      }
+      lastUrlRef.current = url;
       return () => {
-        element.pause();
-        element.removeAttribute("src");
-        URL.revokeObjectURL(url);
+        // keep playing; cleanup handled when component unmounts or next playback starts
       };
     }
 
@@ -83,5 +91,20 @@ export function useAutoPlayAssistantAudio(
       fallbackAudio.pause();
       URL.revokeObjectURL(url);
     };
-  }, [messages, utteranceById, autoPlay, audioRef]);
+  }, [messages, utteranceById, autoPlay, audioRef, activeSessionId]);
+
+  useEffect(() => {
+    return () => {
+      const element = audioRef?.current;
+      element?.pause();
+      if (lastUrlRef.current) {
+        // URL.revokeObjectURL(lastUrlRef.current);
+        lastUrlRef.current = null;
+      }
+    };
+  }, [audioRef]);
+}
+
+function buildPlaybackKey(messageId?: number | null, utteranceId?: number | null) {
+  return `${messageId ?? "unknown"}-${utteranceId ?? "none"}`;
 }

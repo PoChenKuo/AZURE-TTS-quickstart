@@ -1,14 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import type { ChatMessage, ChatSession, VoiceProfile, AppSettings } from "../types";
 import { pushToast } from "../state/toastStore";
-import {
-  addChatMessage,
-  linkChatToUtterance,
-  saveSessionGeminiCache,
-  storeUtterance,
-} from "../db/actions";
-import { synthesizeAssistantSpeech } from "../lib/synthesizeAssistantSpeech";
-import { hashText, minutesToMs } from "../lib/helpers";
+import { addChatMessage, saveSessionGeminiCache } from "../db/actions";
 import { callGemini, type GeminiCallOptions } from "../lib/gemini";
 import {
   type SessionGeminiCacheState,
@@ -19,6 +12,7 @@ import {
   fingerprintHistory,
   partitionHistoryForCache,
 } from "../lib/conversationHistory";
+import { synthesizeAndStoreAssistantAudio } from "../lib/assistantAudio";
 
 type SendPayload = {
   text: string;
@@ -84,13 +78,19 @@ export function useConversationMutation({
         createdUtc: new Date().toISOString(),
         geminiMeta: meta,
       });
-      await persistAssistantAudio({
-        reply,
-        preparedSettings,
-        defaultVoice,
-        assistantId,
-        requestId: meta?.requestId,
-      });
+      try {
+        await synthesizeAndStoreAssistantAudio({
+          text: reply,
+          settings: preparedSettings,
+          defaultVoice,
+          assistantId,
+          requestId: meta?.requestId,
+        });
+      }
+      catch (error) {
+        console.error(error);
+        pushToast("Stored the response but audio generation failed.", "error");
+      }
     },
     onSuccess,
     onError: (error: unknown) => {
@@ -244,46 +244,5 @@ async function persistCacheState({
 
   if (shouldReuse && sessionCacheState) {
     await saveSessionGeminiCache(sessionId);
-  }
-}
-
-async function persistAssistantAudio({
-  reply,
-  preparedSettings,
-  defaultVoice,
-  assistantId,
-  requestId,
-}: {
-  reply: string;
-  preparedSettings: AppSettings;
-  defaultVoice?: VoiceProfile;
-  assistantId: number;
-  requestId?: string | null;
-}) {
-  try {
-    const buffer = await synthesizeAssistantSpeech(
-      reply,
-      preparedSettings,
-      defaultVoice
-    );
-    const expiresUtc = new Date(
-      Date.now() + minutesToMs((preparedSettings.cleanupIntervalMinutes ?? 5) * 3)
-    ).toISOString();
-    const utteranceId = await storeUtterance({
-      textHash: hashText(reply),
-      text: reply,
-      voiceId: defaultVoice?.id,
-      audioBlob: buffer,
-      size: buffer.byteLength,
-      createdUtc: new Date().toISOString(),
-      expiresUtc,
-      source: "gemini",
-      geminiRequestId: requestId ?? undefined,
-    });
-    await linkChatToUtterance(assistantId, utteranceId);
-  }
-  catch (error) {
-    console.error(error);
-    pushToast("Stored the response but audio generation failed.", "error");
   }
 }

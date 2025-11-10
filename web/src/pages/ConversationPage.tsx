@@ -20,6 +20,9 @@ import { useAutoPlayAssistantAudio } from "../hooks/useAutoPlayAssistantAudio";
 import { parseSessionGeminiCacheState } from "../lib/geminiCache";
 import { useChatSessionSelection } from "../hooks/useChatSessionSelection";
 import { useConversationMutation } from "../hooks/useConversationMutation";
+import type { AppSettings, ChatMessage } from "../types";
+import { synthesizeAndStoreAssistantAudio } from "../lib/assistantAudio";
+import { pushToast } from "../state/toastStore";
 
 // Top-level conversation surface: wires reactive data + UI scaffolding while delegating heavy logic to hooks/components.
 function ConversationPage() {
@@ -30,7 +33,6 @@ function ConversationPage() {
   const messages = useChatMessages(activeSessionId ?? undefined) ?? [];
   const utterances = useUtterances(100) ?? [];
   const [input, setInput] = useState("");
-  const [autoPlay, setAutoPlay] = useState(true);
   const [sessionDetailsOpen, setSessionDetailsOpen] = useState(false);
   const autoPlayAudioRef = useRef<HTMLAudioElement>(null);
 
@@ -76,7 +78,7 @@ function ConversationPage() {
   useAutoPlayAssistantAudio(
     messages,
     utteranceById,
-    autoPlay,
+    true,
     autoPlayAudioRef,
     activeSessionId
   );
@@ -116,6 +118,36 @@ function ConversationPage() {
     await renameChatSession(sessionId, next);
   }
 
+  async function handleRegenerateAudio(message: ChatMessage) {
+    if (message.role !== "assistant" || !message.id) {
+      return;
+    }
+    if (!settings) {
+      pushToast("Save your Gemini settings before regenerating audio.", "info");
+      return;
+    }
+    const preparedSettings = normalizeSettingsRecord(settings);
+    if (!preparedSettings.geminiKey || !preparedSettings.endpoint) {
+      pushToast("Gemini settings are incomplete.", "info");
+      return;
+    }
+
+    try {
+      await synthesizeAndStoreAssistantAudio({
+        text: message.content,
+        settings: preparedSettings,
+        defaultVoice,
+        assistantId: message.id,
+        requestId: message.geminiMeta?.requestId ?? undefined,
+      });
+      pushToast("Audio regenerated.", "success");
+    }
+    catch (error) {
+      console.error(error);
+      pushToast("Failed to regenerate audio.", "error");
+    }
+  }
+
   return (
     <div className="flex gap-5 h-[calc(100vh-160px)] min-h-0 overflow-hidden max-lg:flex-col max-lg:h-auto max-lg:overflow-visible">
       <SessionSidebar
@@ -130,13 +162,11 @@ function ConversationPage() {
       <section className="flex-1 min-h-0">
         <div className="card flex h-full min-h-0 flex-col gap-5">
           <header className="flex flex-wrap items-start justify-between gap-4">
-            <div className="space-y-1">
-              <h2 className="text-2xl font-semibold text-white">Conversation</h2>
-              <p className="text-sm text-slate-400">
-                Gemini replies are synthesized into audio blobs and cached in IndexedDB. Toggle autoplay if you prefer manual playback.
-              </p>
-            </div>
-            {activeSession && (
+            <div className="space-y-1 flex justify-between w-full items-center">
+              <h2 className="text-2xl font-semibold text-white">
+                <p>Conversation</p>
+              </h2>
+              {activeSession && (
               <div
                 className="relative ml-auto"
                 onMouseEnter={() => setSessionDetailsOpen(true)}
@@ -172,21 +202,41 @@ function ConversationPage() {
                         <span className="text-slate-400">Pending first prompt</span>
                       )}
                     </div>
+
+                    <div className="break-all">
+                      <span className="text-sm text-slate-400">Gemini replies are synthesized into audio blobs and cached in IndexedDB. Toggle autoplay if you prefer manual playback.</span>
+                      
+                    </div>
                   </div>
                 </div>
               </div>
             )}
+            </div>
+            
           </header>
 
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <label className="inline-flex items-center gap-2 text-sm text-slate-200">
-              <input
-                type="checkbox"
-                checked={autoPlay}
-                onChange={(e) => setAutoPlay(e.target.checked)}
-              />
-              Auto-play assistant audio
-            </label>
+            <span className="text-sm text-slate-200 flex items-center gap-2">
+              Assistant audio auto-plays on each response.
+            </span>
+            <button
+              type="button"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/20 text-white hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
+              aria-label="Play latest assistant audio"
+              onClick={() => {
+                const element = autoPlayAudioRef.current;
+                if (!element || !element.src) {
+                  pushToast("No assistant audio available yet.", "info");
+                  return;
+                }
+                element.currentTime = 0;
+                element.play().catch(() => {
+                  pushToast("Unable to play audio automatically.", "info");
+                });
+              }}
+            >
+              ▶
+            </button>
             {defaultVoice && (
               <span className="inline-flex items-center gap-2 rounded-full border border-white/20 px-4 py-1 text-sm text-white">
                 Voice: {defaultVoice.name}
@@ -194,8 +244,7 @@ function ConversationPage() {
             )}
             <audio
               ref={autoPlayAudioRef}
-              controls
-              className="w-full max-w-xs rounded-xl border border-white/10 bg-black/30 p-2"
+              className="hidden"
               aria-label="Assistant playback"
             />
           </div>
@@ -204,6 +253,8 @@ function ConversationPage() {
             messages={messages}
             utteranceById={utteranceById}
             className="flex-1 min-h-0 overflow-y-auto pr-2"
+            onRegenerateAudio={handleRegenerateAudio}
+            sharedAudioRef={autoPlayAudioRef}
           />
 
           <MessageComposer
@@ -219,3 +270,11 @@ function ConversationPage() {
 }
 
 export default ConversationPage;
+
+function normalizeSettingsRecord(settings: AppSettings): AppSettings {
+  return {
+    ...settings,
+    speechKey: settings.speechKey ?? undefined,
+    endpoint: settings.endpoint ?? undefined,
+  };
+}
