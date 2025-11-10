@@ -108,60 +108,70 @@ function VoiceManagerPage() {
           </p>
         </header>
 
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Locale</th>
-              <th>Style</th>
-              <th>Voice ID</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {voices.map((voice) => (
-              <tr key={voice.id}>
-                <td>
-                  {voice.name}
-                  {voice.isDefault && <span className="pill" style={{ marginLeft: "0.4rem" }}>Default</span>}
-                </td>
-                <td>{voice.locale}</td>
-                <td>{voice.style ?? "general"}</td>
-                <td className="text-muted">{voice.azureVoiceId ?? "n/a"}</td>
-                <td style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
-                  <button
-                    className="btn btn-secondary"
-                    type="button"
-                    disabled={voice.isDefault}
-                    onClick={async () => {
-                      if (!voice.id) {
-                        return;
-                      }
-                      await setDefaultVoice(voice.id);
-                      pushToast(`"${voice.name}" is now the default voice.`, "success");
-                    }}
-                  >
-                    Set default
-                  </button>
-                  <button
-                    className="btn btn-text"
-                    type="button"
-                    onClick={() => handleDeleteVoice(voice)}
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {!voices.length && (
+        <div className="table-wrapper">
+          <table className="table table-mobile-stack">
+            <thead>
               <tr>
-                <td colSpan={5} className="text-muted">
-                  No voices yet. Use the form below to add your first entry.
-                </td>
+                <th>Name</th>
+                <th>Locale</th>
+                <th>Style</th>
+                <th>Voice ID</th>
+                <th>Actions</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {voices.map((voice) => (
+                <tr key={voice.id}>
+                  <td data-label="Name">
+                    {voice.name}
+                    {voice.isDefault && (
+                      <span className="pill" style={{ marginLeft: "0.4rem" }}>
+                        Default
+                      </span>
+                    )}
+                  </td>
+                  <td data-label="Locale">{voice.locale}</td>
+                  <td data-label="Style">{voice.style ?? "general"}</td>
+                  <td data-label="Voice ID" className="text-muted">
+                    {voice.azureVoiceId ?? "n/a"}
+                  </td>
+                  <td data-label="Actions">
+                    <div className="table-actions">
+                      <button
+                        className="btn btn-secondary"
+                        type="button"
+                        disabled={voice.isDefault}
+                        onClick={async () => {
+                          if (!voice.id) {
+                            return;
+                          }
+                          await setDefaultVoice(voice.id);
+                          pushToast(`"${voice.name}" is now the default voice.`, "success");
+                        }}
+                      >
+                        Set default
+                      </button>
+                      <button
+                        className="btn btn-text"
+                        type="button"
+                        onClick={() => handleDeleteVoice(voice)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {!voices.length && (
+                <tr>
+                  <td colSpan={5} className="text-muted">
+                    No voices yet. Use the form below to add your first entry.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
 
         <form onSubmit={handleAddVoice} className="grid" style={{ gap: "0.8rem" }}>
           <h3>Add / Edit Voice</h3>
@@ -217,7 +227,15 @@ function VoiceManagerPage() {
         <div className="grid" style={{ gap: "1rem" }}>
           {utterances.map((utterance) => (
             <article key={utterance.id} className="card" style={{ padding: "1rem" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                  gap: "0.75rem",
+                }}
+              >
                 <div>
                   <p style={{ margin: 0, fontWeight: 600 }}>{utterance.text.slice(0, 60)}{utterance.text.length > 60 ? "..." : ""}</p>
                   <p className="text-muted" style={{ margin: 0 }}>

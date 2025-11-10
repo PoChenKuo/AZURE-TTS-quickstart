@@ -167,76 +167,58 @@ function ConversationPage() {
                 <p>Conversation</p>
               </h2>
               {activeSession && (
-              <div
-                className="relative ml-auto"
-                onMouseEnter={() => setSessionDetailsOpen(true)}
-                onMouseLeave={() => setSessionDetailsOpen(false)}
-              >
-                <button
-                  type="button"
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-lg text-white backdrop-blur hover:bg-cyan-400/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
-                  aria-label="View session metadata"
-                  aria-expanded={sessionDetailsOpen}
-                  onClick={() => setSessionDetailsOpen((prev) => !prev)}
-                >
-                  i
-                </button>
                 <div
-                  className={clsx(
-                    "absolute right-0 top-full mt-3 w-80 max-w-[80vw] rounded-2xl border border-white/15 bg-slate-900/95 p-4 shadow-2xl transition-all duration-150",
-                    sessionDetailsOpen
-                      ? "pointer-events-auto translate-y-0 opacity-100"
-                      : "pointer-events-none -translate-y-1 opacity-0"
-                  )}
+                  className="relative ml-auto"
+                  onMouseEnter={() => setSessionDetailsOpen(true)}
+                  onMouseLeave={() => setSessionDetailsOpen(false)}
                 >
-                  <div className="space-y-2 text-xs text-slate-100">
-                    <div className="break-all">
-                      <span className="font-semibold text-slate-50">SHA256:</span>{" "}
-                      <code className="text-cyan-100">{activeSession.sha256}</code>
-                    </div>
-                    <div className="break-all">
-                      <span className="font-semibold text-slate-50">Gemini cache:</span>{" "}
-                      {cacheDisplayLabel ? (
-                        <span className="text-cyan-200">{cacheDisplayLabel}</span>
-                      ) : (
-                        <span className="text-slate-400">Pending first prompt</span>
-                      )}
-                    </div>
+                  <button
+                    type="button"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-lg text-white backdrop-blur hover:bg-cyan-400/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
+                    aria-label="View session metadata"
+                    aria-expanded={sessionDetailsOpen}
+                    onClick={() => setSessionDetailsOpen((prev) => !prev)}
+                  >
+                    i
+                  </button>
+                  <div
+                    className={clsx(
+                      "absolute right-0 top-full mt-3 w-80 max-w-[80vw] rounded-2xl border border-white/15 bg-slate-900/95 p-4 shadow-2xl transition-all duration-150",
+                      sessionDetailsOpen
+                        ? "pointer-events-auto translate-y-0 opacity-100"
+                        : "pointer-events-none -translate-y-1 opacity-0"
+                    )}
+                  >
+                    <div className="space-y-2 text-xs text-slate-100">
+                      <div className="break-all">
+                        <span className="font-semibold text-slate-50">SHA256:</span>{" "}
+                        <code className="text-cyan-100">{activeSession.sha256}</code>
+                      </div>
+                      <div className="break-all">
+                        <span className="font-semibold text-slate-50">Gemini cache:</span>{" "}
+                        {cacheDisplayLabel ? (
+                          <span className="text-cyan-200">{cacheDisplayLabel}</span>
+                        ) : (
+                          <span className="text-slate-400">Pending first prompt</span>
+                        )}
+                      </div>
 
-                    <div className="break-all">
-                      <span className="text-sm text-slate-400">Gemini replies are synthesized into audio blobs and cached in IndexedDB. Toggle autoplay if you prefer manual playback.</span>
-                      
+                      <div className="break-all">
+                        <span className="text-sm text-slate-400">
+                          Gemini replies are synthesized into audio blobs and cached in IndexedDB. Toggle autoplay if you prefer manual playback.
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
             </div>
-            
           </header>
 
           <div className="flex flex-wrap items-center justify-between gap-4">
             <span className="text-sm text-slate-200 flex items-center gap-2">
               Assistant audio auto-plays on each response.
             </span>
-            <button
-              type="button"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/20 text-white hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
-              aria-label="Play latest assistant audio"
-              onClick={() => {
-                const element = autoPlayAudioRef.current;
-                if (!element || !element.src) {
-                  pushToast("No assistant audio available yet.", "info");
-                  return;
-                }
-                element.currentTime = 0;
-                element.play().catch(() => {
-                  pushToast("Unable to play audio automatically.", "info");
-                });
-              }}
-            >
-              ▶
-            </button>
             {defaultVoice && (
               <span className="inline-flex items-center gap-2 rounded-full border border-white/20 px-4 py-1 text-sm text-white">
                 Voice: {defaultVoice.name}
@@ -278,3 +260,4 @@ function normalizeSettingsRecord(settings: AppSettings): AppSettings {
     endpoint: settings.endpoint ?? undefined,
   };
 }
+
