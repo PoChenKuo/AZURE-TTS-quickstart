@@ -36,11 +36,7 @@ export async function callGemini(
   const cacheTtlSeconds =
     options?.cacheTtlSeconds ?? DEFAULT_CACHE_TTL_SECONDS;
   const requestContents = [
-    ...toContentList(history),
-    {
-      role: "user",
-      parts: [{ text: prompt }],
-    },
+    ...toContentList(history)
   ];
 
   const createCache = async () => {
@@ -57,6 +53,7 @@ export async function callGemini(
   };
 
   const sendRequest = async (cacheName?: string) => {
+    console.log(cacheName);
     const response = await ai.models.generateContent({
       model: MODEL_NAME,
       contents: requestContents,
