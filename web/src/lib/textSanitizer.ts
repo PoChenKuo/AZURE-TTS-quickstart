@@ -3,9 +3,9 @@ const emojiRegex = /[\p{Extended_Pictographic}]/gu;
 export function sanitizeSpeechText(input: string): string {
   let text = input ?? "";
 
-  // Strip fenced and inline code blocks
-  text = text.replace(/```[\s\S]*?```/g, " ");
-  text = text.replace(/`[^`]+`/g, " ");
+  // Strip fenced and inline code markers but keep inner text
+  text = text.replace(/```([\s\S]*?)```/g, (_, code) => ` ${code} `);
+  text = text.replace(/`([^`]+)`/g, "$1");
 
   // Replace markdown links with the label
   text = text.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
