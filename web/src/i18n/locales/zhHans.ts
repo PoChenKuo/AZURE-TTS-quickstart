@@ -89,6 +89,7 @@ const zhHans = {
       comfortable: "舒适（100%）",
       relaxed: "宽松（115%）",
       large: "较大（130%）",
+      extraLarge: "特大（150%）",
     },
     save: "保存更改",
     saving: "正在保存…",

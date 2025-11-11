@@ -10,6 +10,10 @@ const FONT_SCALE_OPTIONS = [
   { value: 1, labelKey: "settings.fontScaleOptions.comfortable" },
   { value: 1.15, labelKey: "settings.fontScaleOptions.relaxed" },
   { value: 1.3, labelKey: "settings.fontScaleOptions.large" },
+  { value: 1.5, labelKey: "settings.fontScaleOptions.extraLarge" },
+  { value: 1.7, labelKey: "settings.fontScaleOptions.huge" },
+  { value: 1.9, labelKey: "settings.fontScaleOptions.superHuge" },
+  { value: 2.2, labelKey: "settings.fontScaleOptions.extraHuge" },
 ];
 
 // Presentation-only shell; actual settings logic lives in SettingsContext.
@@ -117,7 +121,7 @@ function SettingsSurface() {
               className="input"
               type="number"
               min={1}
-              max={120}
+              max={1440}
               value={form.cleanupIntervalMinutes}
               onChange={(e) =>
                 handleChange("cleanupIntervalMinutes", Number(e.target.value))

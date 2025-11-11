@@ -89,6 +89,7 @@ const ko = {
       comfortable: "보통(100%)",
       relaxed: "여유(115%)",
       large: "크게(130%)",
+      extraLarge: "초대형(150%)",
     },
     save: "변경 사항 저장",
     saving: "저장 중…",

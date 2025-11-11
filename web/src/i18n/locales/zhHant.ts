@@ -89,6 +89,7 @@ const zhHant = {
       comfortable: "適中（100%）",
       relaxed: "寬鬆（115%）",
       large: "加大（130%）",
+      extraLarge: "特大（150%）",
     },
     save: "儲存變更",
     saving: "儲存中…",
