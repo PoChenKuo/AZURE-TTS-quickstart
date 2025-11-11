@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import clsx from "clsx";
 import { SessionSidebar } from "../components/SessionSidebar";
 import { ConversationLog } from "../components/ConversationLog";
@@ -63,23 +64,88 @@ function ConversationSurface() {
     isMessagePending,
     conversationFontScale,
   } = useConversationContext();
+  const [isSidebarCompact, setIsSidebarCompact] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+      return;
+    }
+    const mediaQuery = window.matchMedia("(max-width: 1024px)");
+    const handleChange = (event: MediaQueryListEvent | MediaQueryList) => {
+      setIsSidebarCompact(event.matches);
+    };
+    handleChange(mediaQuery);
+    const listener = (event: MediaQueryListEvent) => handleChange(event);
+    if (typeof mediaQuery.addEventListener === "function") {
+      mediaQuery.addEventListener("change", listener);
+      return () => mediaQuery.removeEventListener("change", listener);
+    }
+    mediaQuery.addListener(listener);
+    return () => mediaQuery.removeListener(listener);
+  }, []);
+
+  useEffect(() => {
+    setIsSidebarOpen(!isSidebarCompact);
+  }, [isSidebarCompact]);
+
+  const closeSidebar = () => {
+    if (isSidebarCompact) {
+      setIsSidebarOpen(false);
+    }
+  };
+
+  const openSidebar = () => {
+    if (isSidebarCompact) {
+      setIsSidebarOpen(true);
+    }
+  };
+
+  const handleSessionSelect = (sessionId: number | null) => {
+    setActiveSessionId(sessionId);
+    if (isSidebarCompact) {
+      setIsSidebarOpen(false);
+    }
+  };
+
+  const handleNewChatClick = () => {
+    handleNewChat();
+    if (isSidebarCompact) {
+      setIsSidebarOpen(false);
+    }
+  };
+
+  const sidebar = (
+    <SessionSidebar
+      sessions={sessions}
+      activeSessionId={activeSessionId}
+      onSelect={handleSessionSelect}
+      onNewChat={handleNewChatClick}
+      onDelete={handleDeleteSession}
+      onRename={handleRename}
+    />
+  );
 
   return (
     <div className="flex gap-5 h-[calc(100vh-130px)] min-h-0 overflow-hidden max-lg:flex-col max-lg:h-auto max-lg:overflow-visible">
-      <SessionSidebar
-        sessions={sessions}
-        activeSessionId={activeSessionId}
-        onSelect={setActiveSessionId}
-        onNewChat={handleNewChat}
-        onDelete={handleDeleteSession}
-        onRename={handleRename}
-      />
+      {!isSidebarCompact && sidebar}
 
       <section className="flex-1 min-h-0">
         <div className="card flex h-full min-h-0 flex-col gap-5">
           <header className="flex flex-wrap items-start justify-between gap-4">
-            <div className="space-y-1 flex justify-between w-full items-center">
+            <div className="flex w-full flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div className="flex items-center gap-2">
+                {isSidebarCompact && (
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-2 rounded-full border border-white/30 px-3 py-1.5 text-sm text-white hover:border-cyan-400/70 hover:text-cyan-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+                    onClick={openSidebar}
+                    aria-haspopup="dialog"
+                    aria-expanded={isSidebarOpen}
+                  >
+                    Show conversations
+                  </button>
+                )}
                 <h2 className="text-2xl font-semibold text-white truncate">
                   {activeSession?.title?.trim() || "Conversation"}
                 </h2>
@@ -302,6 +368,32 @@ function ConversationSurface() {
           />
         </div>
       </section>
+
+      {isSidebarCompact && isSidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 flex items-start justify-center bg-slate-950/80 px-4 py-6"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Conversation list"
+          onClick={closeSidebar}
+        >
+          <div
+            className="w-full max-w-md"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="mb-3 flex justify-end">
+              <button
+                type="button"
+                className="rounded-full border border-white/30 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white hover:border-cyan-400/70 hover:text-cyan-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+                onClick={closeSidebar}
+              >
+                Close
+              </button>
+            </div>
+            {sidebar}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
