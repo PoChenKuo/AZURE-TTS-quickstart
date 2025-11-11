@@ -65,6 +65,14 @@ const zhHant = {
     pause: "暫停助理語音",
     playLabel: "播放音訊",
   },
+  audioPanel: {
+    nowPlaying: "助理音訊",
+    rate: "速度",
+    play: "播放",
+    pause: "暫停",
+    hide: "隱藏",
+    show: "顯示音訊控制",
+  },
 
   settings: {
     title: "設定",
@@ -89,7 +97,7 @@ const zhHant = {
       comfortable: "適中（100%）",
       relaxed: "寬鬆（115%）",
       large: "加大（130%）",
-      extraLarge: "特大（150%）",
+      extraLarge: "特大（250%）",
     },
     save: "儲存變更",
     saving: "儲存中…",

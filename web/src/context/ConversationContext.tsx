@@ -82,6 +82,9 @@ type ConversationContextValue = {
   deletingMessageIds: Set<number>;
   handleRetryResponse: (message: ChatMessage) => Promise<void>;
   retryingMessageIds: Set<number>;
+  isAudioPanelCollapsed: boolean;
+  setAudioPanelCollapsed: Dispatch<SetStateAction<boolean>>;
+  audioPanelState: AudioPanelState;
   playbackRate: number;
   setPlaybackRate: Dispatch<SetStateAction<number>>;
   autoPlayAudioRef: RefObject<HTMLAudioElement | null>;
@@ -90,6 +93,13 @@ type ConversationContextValue = {
   handleVoiceChange: (event: ChangeEvent<HTMLSelectElement>) => Promise<void>;
   isUpdatingVoice: boolean;
   conversationFontScale: number;
+};
+
+type AudioPanelState = {
+  isPlaying: boolean;
+  hasSource: boolean;
+  currentTime: number;
+  duration: number;
 };
 
 const ConversationContext = createContext<ConversationContextValue | undefined>(
@@ -121,6 +131,13 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
   const [retryingMessageIds, setRetryingMessageIds] = useState<Set<number>>(
     () => new Set()
   );
+  const [isAudioPanelCollapsed, setAudioPanelCollapsed] = useState(false);
+  const [audioPanelState, setAudioPanelState] = useState<AudioPanelState>({
+    isPlaying: false,
+    hasSource: false,
+    currentTime: 0,
+    duration: 0,
+  });
   const [playbackRate, setPlaybackRate] = useState(1);
   const autoPlayAudioRef = useRef<HTMLAudioElement>(null);
 
@@ -189,6 +206,45 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
     autoPlayAudioRef,
     activeSessionId
   );
+
+  useEffect(() => {
+    const element = autoPlayAudioRef.current;
+    if (!element) {
+      setAudioPanelState({
+        isPlaying: false,
+        hasSource: false,
+        currentTime: 0,
+        duration: 0,
+      });
+      return;
+    }
+
+    const updatePanelState = () => {
+      const duration = Number.isFinite(element.duration) ? element.duration : 0;
+      setAudioPanelState({
+        isPlaying: !element.paused && !element.ended,
+        hasSource: Boolean(element.currentSrc || element.src),
+        currentTime: element.currentTime ?? 0,
+        duration,
+      });
+    };
+
+    updatePanelState();
+    const events: Array<keyof HTMLMediaElementEventMap> = [
+      "play",
+      "pause",
+      "timeupdate",
+      "ended",
+      "loadedmetadata",
+      "emptied",
+    ];
+    events.forEach((event) => element.addEventListener(event, updatePanelState));
+    return () => {
+      events.forEach((event) =>
+        element.removeEventListener(event, updatePanelState)
+      );
+    };
+  }, [autoPlayAudioRef]);
 
   useEffect(() => {
     const element = autoPlayAudioRef.current;
@@ -532,6 +588,9 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
     deletingMessageIds,
     handleRetryResponse,
     retryingMessageIds,
+    isAudioPanelCollapsed,
+    setAudioPanelCollapsed,
+    audioPanelState,
     playbackRate,
     setPlaybackRate,
     autoPlayAudioRef,

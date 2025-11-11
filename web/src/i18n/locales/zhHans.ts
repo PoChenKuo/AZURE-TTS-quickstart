@@ -65,6 +65,14 @@ const zhHans = {
     pause: "暂停助理语音",
     playLabel: "播放音频",
   },
+  audioPanel: {
+    nowPlaying: "助理音频",
+    rate: "速度",
+    play: "播放",
+    pause: "暂停",
+    hide: "隐藏",
+    show: "显示音频控制",
+  },
 
   settings: {
     title: "设置",
@@ -89,7 +97,7 @@ const zhHans = {
       comfortable: "舒适（100%）",
       relaxed: "宽松（115%）",
       large: "较大（130%）",
-      extraLarge: "特大（150%）",
+      extraLarge: "特大（250%）",
     },
     save: "保存更改",
     saving: "正在保存…",

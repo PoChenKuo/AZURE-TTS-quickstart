@@ -65,6 +65,14 @@ const ko = {
     pause: "어시스턴트 음성 일시 정지",
     playLabel: "오디오 재생",
   },
+  audioPanel: {
+    nowPlaying: "어시스턴트 오디오",
+    rate: "속도",
+    play: "재생",
+    pause: "일시 정지",
+    hide: "숨기기",
+    show: "오디오 제어 표시",
+  },
 
   settings: {
     title: "설정",
@@ -89,7 +97,7 @@ const ko = {
       comfortable: "보통(100%)",
       relaxed: "여유(115%)",
       large: "크게(130%)",
-      extraLarge: "초대형(150%)",
+      extraLarge: "초대형(250%)",
     },
     save: "변경 사항 저장",
     saving: "저장 중…",

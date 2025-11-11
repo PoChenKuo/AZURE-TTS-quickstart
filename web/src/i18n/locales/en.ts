@@ -68,6 +68,14 @@ const en = {
     pause: "Pause assistant audio",
     playLabel: "Play audio",
   },
+  audioPanel: {
+    nowPlaying: "Assistant audio",
+    rate: "Rate",
+    play: "Play",
+    pause: "Pause",
+    hide: "Hide audio controls",
+    show: "Show audio controls",
+  },
   log: {
     audioUnavailable: "Audio unavailable.",
     regenerate: "Re-generate audio",
@@ -102,7 +110,7 @@ const en = {
       comfortable: "Comfortable (100%)",
       relaxed: "Relaxed (115%)",
       large: "Large (130%)",
-      extraLarge: "Extra large (150%)",
+      extraLarge: "Extra large (250%)",
       huge: "Huge (170%)",
       superHuge: "Super Huge (190%)",
       extraHuge: "Extra Huge (220%)",

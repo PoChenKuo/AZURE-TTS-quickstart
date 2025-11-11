@@ -2,6 +2,7 @@ import clsx from "clsx";
 import { SessionSidebar } from "../components/SessionSidebar";
 import { ConversationLog } from "../components/ConversationLog";
 import { MessageComposer } from "../components/MessageComposer";
+import { AudioControlPanel } from "../components/AudioControlPanel";
 import {
   ConversationProvider,
   useConversationContext,
@@ -12,6 +13,7 @@ function ConversationPage() {
   return (
     <ConversationProvider>
       <ConversationSurface />
+      <AudioControlPanel />
     </ConversationProvider>
   );
 }
@@ -298,8 +300,6 @@ function ConversationSurface() {
             onChange={setInput}
             onSubmit={handleSubmit}
             isSubmitting={isMessagePending}
-            playbackRate={playbackRate}
-            onPlaybackRateChange={setPlaybackRate}
           />
         </div>
       </section>

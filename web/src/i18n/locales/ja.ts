@@ -65,6 +65,14 @@ const ja = {
     pause: "音声を一時停止",
     playLabel: "音声を再生",
   },
+  audioPanel: {
+    nowPlaying: "アシスタント音声",
+    rate: "再生速度",
+    play: "再生",
+    pause: "一時停止",
+    hide: "非表示",
+    show: "音声コントロールを表示",
+  },
 
   settings: {
     title: "設定",
@@ -89,7 +97,7 @@ const ja = {
       comfortable: "標準（100%）",
       relaxed: "ゆったり（115%）",
       large: "大きい（130%）",
-      extraLarge: "特大（150%）",
+      extraLarge: "特大（250%）",
     },
     save: "変更を保存",
     saving: "保存中…",

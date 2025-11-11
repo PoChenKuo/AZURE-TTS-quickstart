@@ -93,10 +93,10 @@ function AppLayout({ children }: PropsWithChildren) {
               </nav>
 
               <div className="header-meta">
-                <label className="flex items-center gap-1 text-xs text-slate-300">
+                <label className="flex items-center gap-1 text-md text-slate-300">
                   <span>{t("app.language")}</span>
                   <select
-                    className="language-select rounded-full border border-white/20 px-2 py-1 text-xs focus:outline-none"
+                    className="language-select rounded-full border border-white/20 px-2 py-1 text-md focus:outline-none"
                     value={i18n.language}
                     onChange={(e) => i18n.changeLanguage(e.target.value)}
                   >
