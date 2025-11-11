@@ -89,6 +89,10 @@ export function ConversationLog({
   );
   const arrowButtonClass =
     "pointer-events-auto rounded-full border border-white/30 bg-slate-900/80 p-2 text-lg leading-none text-white shadow-lg shadow-black/40 transition hover:border-cyan-300/70 hover:text-cyan-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 disabled:cursor-not-allowed disabled:opacity-40";
+  const arrowRailBaseClass =
+    "pointer-events-none fixed top-1/2 -translate-y-1/2 z-30 flex flex-col gap-3 lg:absolute";
+  const leftArrowRailClass = clsx(arrowRailBaseClass, "left-2");
+  const rightArrowRailClass = clsx(arrowRailBaseClass, "right-2");
 
   const scrollToAssistantIndex = (targetIndex: number) => {
     if (
@@ -280,7 +284,7 @@ export function ConversationLog({
       })}
         {!sharedAudioRef && <audio ref={audioRef} className="hidden" />}
       </div>
-      <div className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 flex flex-col gap-3">
+      <div className={leftArrowRailClass}>
         <button
           type="button"
           className={arrowButtonClass}
@@ -302,7 +306,7 @@ export function ConversationLog({
           &uArr;
         </button>
       </div>
-      <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 flex flex-col gap-3">
+      <div className={rightArrowRailClass}>
         <button
           type="button"
           className={arrowButtonClass}
