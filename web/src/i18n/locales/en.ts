@@ -74,6 +74,8 @@ const en = {
     tokens: "{{count}} tokens | {{model}}",
     timeLabel: "{{time}}",
     deleteMessage: "Delete",
+    retryResponse: "Retry Gemini response",
+    retrying: "Retrying...",
   },
   settings: {
     title: "Settings",

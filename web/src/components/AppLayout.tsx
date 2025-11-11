@@ -23,7 +23,7 @@ function AppLayout({ children }: PropsWithChildren) {
     if (typeof window === "undefined") {
       return;
     }
-    const mediaQuery = window.matchMedia("(max-width: 800px)");
+    const mediaQuery = window.matchMedia("(max-width: 1200px)");
     const handleChange = (event: MediaQueryListEvent | MediaQueryList) => {
       setIsCompact(event.matches);
     };

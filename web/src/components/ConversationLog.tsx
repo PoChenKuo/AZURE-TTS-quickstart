@@ -19,6 +19,9 @@ type ConversationLogProps = {
   deletingMessageIds?: Set<number>;
   playbackRate?: number;
   fontScale?: number;
+  onRetryResponse?: (message: ChatMessage) => void | Promise<void>;
+  retryingMessageIds?: Set<number>;
+  isRetryDisabled?: boolean;
 };
 
 // Displays the chronological transcript plus any cached audio previews.
@@ -34,6 +37,9 @@ export function ConversationLog({
   deletingMessageIds,
   playbackRate = 1,
   fontScale = 1,
+  onRetryResponse,
+  retryingMessageIds,
+  isRetryDisabled = false,
 }: ConversationLogProps) {
   const fallbackAudioRef = useRef<HTMLAudioElement | null>(null);
   const audioRef =
@@ -67,6 +73,10 @@ export function ConversationLog({
           Boolean(message.id != null && deletingAudioIds?.has(message.id));
         const deletingMessage =
           Boolean(message.id != null && deletingMessageIds?.has(message.id));
+        const isRetrying =
+          Boolean(message.id != null && retryingMessageIds?.has(message.id));
+        const canRetry =
+          message.role === "user" && Boolean(message.id && onRetryResponse);
 
         return (
           <article
@@ -84,6 +94,16 @@ export function ConversationLog({
               </span>
               <div className="flex items-center gap-3">
                 <span>{new Date(message.createdUtc).toLocaleTimeString()}</span>
+                {canRetry && (
+                  <button
+                    type="button"
+                    className="text-cyan-300 hover:text-cyan-200 disabled:opacity-60"
+                    disabled={isRetrying || isRetryDisabled}
+                    onClick={() => onRetryResponse?.(message)}
+                  >
+                    {isRetrying ? t("log.retrying") : t("log.retryResponse")}
+                  </button>
+                )}
                 {message.id && onDeleteMessage && (
                   <button
                     type="button"

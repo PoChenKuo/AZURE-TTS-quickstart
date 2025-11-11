@@ -161,6 +161,8 @@ const ko = {
     regenerate: "오디오 다시 생성",
     tokens: "{{count}} 토큰 | {{model}}",
     deleteMessage: "삭제",
+    retryResponse: "Gemini 응답 다시 요청",
+    retrying: "다시 요청 중...",
   },
 };
 

@@ -22,6 +22,8 @@ import { synthesizeAndStoreAssistantAudio } from "../lib/assistantAudio";
 type SendPayload = {
   text: string;
   sessionId: number;
+  existingUserEntry?: ChatMessage;
+  historyOverride?: ChatMessage[];
 };
 
 type UseConversationMutationArgs = {
@@ -30,7 +32,6 @@ type UseConversationMutationArgs = {
   sessionCacheState?: SessionGeminiCacheState;
   activeSession?: ChatSession;
   defaultVoice?: VoiceProfile;
-  onSuccess?: () => void;
 };
 
 type CacheContext = {
@@ -48,11 +49,16 @@ export function useConversationMutation({
   sessionCacheState,
   activeSession,
   defaultVoice,
-  onSuccess,
 }: UseConversationMutationArgs) {
   return useMutation({
-    mutationFn: async ({ text, sessionId }: SendPayload) => {
-      const trimmed = text.trim();
+    mutationFn: async ({
+      text,
+      sessionId,
+      existingUserEntry,
+      historyOverride,
+    }: SendPayload) => {
+      const promptSource = existingUserEntry?.content ?? text;
+      const trimmed = promptSource.trim();
       if (!trimmed) {
         throw new Error("Message is empty.");
       }
@@ -60,25 +66,32 @@ export function useConversationMutation({
         throw new Error("Add a Gemini key in Settings first.");
       }
 
+      const sessionTarget = existingUserEntry?.sessionId ?? sessionId;
+      if (!sessionTarget) {
+        throw new Error("No active session for this conversation.");
+      }
+
       const preparedSettings = normalizeSettings(settings);
-      const userEntry = await recordUserMessage(sessionId, trimmed);
+      const userEntry =
+        existingUserEntry ?? (await recordUserMessage(sessionTarget, trimmed));
+      const sourceHistory = historyOverride ?? messages;
       const cacheContext = buildCacheContext(
-        messages,
+        sourceHistory,
         sessionCacheState,
         activeSession,
-        sessionId
+        sessionTarget
       );
       const { reply, meta } = await getAssistantReply({
         prompt: trimmed,
         settings: preparedSettings,
         userEntry,
-        sessionId,
+        sessionId: sessionTarget,
         cacheContext,
         sessionCacheState,
         activeSession,
       });
       const assistantId = await addChatMessage({
-        sessionId,
+        sessionId: sessionTarget,
         role: "assistant",
         content: reply,
         createdUtc: new Date().toISOString(),
@@ -98,7 +111,6 @@ export function useConversationMutation({
         pushToast("Stored the response but audio generation failed.", "error");
       }
     },
-    onSuccess,
     onError: (error: unknown) => {
       const message =
         error instanceof Error ? error.message : "Failed to send message.";

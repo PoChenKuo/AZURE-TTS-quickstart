@@ -52,6 +52,8 @@ function ConversationSurface() {
     deletingAudioIds,
     handleDeleteMessage,
     deletingMessageIds,
+    handleRetryResponse,
+    retryingMessageIds,
     playbackRate,
     setPlaybackRate,
     input,
@@ -62,7 +64,7 @@ function ConversationSurface() {
   } = useConversationContext();
 
   return (
-    <div className="flex gap-5 h-[calc(100vh-110px)] min-h-0 overflow-hidden max-lg:flex-col max-lg:h-auto max-lg:overflow-visible">
+    <div className="flex gap-5 h-[calc(100vh-130px)] min-h-0 overflow-hidden max-lg:flex-col max-lg:h-auto max-lg:overflow-visible">
       <SessionSidebar
         sessions={sessions}
         activeSessionId={activeSessionId}
@@ -286,6 +288,9 @@ function ConversationSurface() {
             deletingMessageIds={deletingMessageIds}
             playbackRate={playbackRate}
             fontScale={conversationFontScale}
+            onRetryResponse={handleRetryResponse}
+            retryingMessageIds={retryingMessageIds}
+            isRetryDisabled={isMessagePending}
           />
 
           <MessageComposer

@@ -80,6 +80,8 @@ type ConversationContextValue = {
   deletingAudioIds: Set<number>;
   handleDeleteMessage: (message: ChatMessage) => Promise<void>;
   deletingMessageIds: Set<number>;
+  handleRetryResponse: (message: ChatMessage) => Promise<void>;
+  retryingMessageIds: Set<number>;
   playbackRate: number;
   setPlaybackRate: Dispatch<SetStateAction<number>>;
   autoPlayAudioRef: RefObject<HTMLAudioElement | null>;
@@ -114,6 +116,9 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
   const [isSavingSessionDetails, setIsSavingSessionDetails] = useState(false);
   const [showContextEditor, setShowContextEditor] = useState(false);
   const [deletingMessageIds, setDeletingMessageIds] = useState<Set<number>>(
+    () => new Set()
+  );
+  const [retryingMessageIds, setRetryingMessageIds] = useState<Set<number>>(
     () => new Set()
   );
   const [playbackRate, setPlaybackRate] = useState(1);
@@ -202,7 +207,12 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
       sessionId = await createChatSession();
       setActiveSessionId(sessionId);
     }
-    messageMutation.mutate({ text: input, sessionId });
+    messageMutation.mutate(
+      { text: input, sessionId, historyOverride: messages },
+      {
+        onSuccess: () => setInput(""),
+      }
+    );
   }
 
   async function handleNewChat() {
@@ -347,6 +357,80 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  function findAssistantReply(userMessage: ChatMessage) {
+    if (!userMessage.id) {
+      return undefined;
+    }
+    const startIndex = messages.findIndex((item) => item.id === userMessage.id);
+    if (startIndex === -1) {
+      return undefined;
+    }
+    for (let index = startIndex + 1; index < messages.length; index += 1) {
+      const candidate = messages[index];
+      if (candidate.role === "assistant") {
+        return candidate;
+      }
+      if (candidate.role === "user") {
+        break;
+      }
+    }
+    return undefined;
+  }
+
+  async function handleRetryResponse(message: ChatMessage) {
+    if (message.role !== "user" || !message.id) {
+      return;
+    }
+    if (retryingMessageIds.has(message.id)) {
+      return;
+    }
+    if (!normalizedSettings?.geminiKey) {
+      pushToast("Add your Gemini key in Settings first.", "info");
+      return;
+    }
+    if (messageMutation.isPending) {
+      pushToast("Wait for the current Gemini request to finish.", "info");
+      return;
+    }
+    const assistantReply = findAssistantReply(message);
+    if (!assistantReply?.id) {
+      pushToast("No Gemini reply to retry for this message yet.", "info");
+      return;
+    }
+
+    setRetryingMessageIds((prev) => {
+      const next = new Set(prev);
+      next.add(message.id!);
+      return next;
+    });
+
+    const historyOverride = messages.filter(
+      (entry) => entry.id !== assistantReply.id
+    );
+
+    try {
+      const removed = await deleteChatMessage(assistantReply.id);
+      if (!removed) {
+        pushToast("Response already removed.", "info");
+      }
+      await messageMutation.mutateAsync({
+        text: message.content,
+        sessionId: message.sessionId,
+        existingUserEntry: message,
+        historyOverride,
+      });
+    } catch (error) {
+      console.error(error);
+      pushToast("Failed to retry Gemini response.", "error");
+    } finally {
+      setRetryingMessageIds((prev) => {
+        const next = new Set(prev);
+        next.delete(message.id!);
+        return next;
+      });
+    }
+  }
+
   async function handleGenerateAchievements() {
     if (!normalizedSettings?.geminiKey) {
       pushToast("Add your Gemini key in Settings first.", "info");
@@ -446,6 +530,8 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
     deletingAudioIds,
     handleDeleteMessage,
     deletingMessageIds,
+    handleRetryResponse,
+    retryingMessageIds,
     playbackRate,
     setPlaybackRate,
     autoPlayAudioRef,

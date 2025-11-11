@@ -161,6 +161,8 @@ const zhHant = {
     regenerate: "重新產生音訊",
     tokens: "{{count}} 個標記 | {{model}}",
     deleteMessage: "刪除",
+    retryResponse: "重新請求 Gemini 回覆",
+    retrying: "重新請求中...",
   },
 };
 

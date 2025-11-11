@@ -161,6 +161,8 @@ const zhHans = {
     regenerate: "重新生成音频",
     tokens: "{{count}} 个标记 | {{model}}",
     deleteMessage: "删除",
+    retryResponse: "重新请求 Gemini 回复",
+    retrying: "重新请求中...",
   },
 };
 

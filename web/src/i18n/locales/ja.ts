@@ -161,6 +161,8 @@ const ja = {
     regenerate: "音声を再生成",
     tokens: "{{count}} トークン | {{model}}",
     deleteMessage: "削除",
+    retryResponse: "Gemini の回答をやり直す",
+    retrying: "再試行中...",
   },
 };
 
