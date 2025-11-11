@@ -113,23 +113,38 @@ export function ConversationLog({
     }
   };
 
-  const handleScrollToTop = () => {
+  const getScrollHost = () => {
     const host = scrollContainerRef.current;
-    if (!host) {
-      return;
+    if (host && host.scrollHeight > host.clientHeight + 1) {
+      return host;
     }
-    host.scrollTo({ top: 0, behavior: "smooth" });
+    return null;
+  };
+
+  const handleScrollToTop = () => {
+    const host = getScrollHost();
+    if (host) {
+      host.scrollTo({ top: 0, behavior: "smooth" });
+    } else if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
     if (hasAssistantResponses) {
       setActiveAssistantIndex(0);
     }
   };
 
   const handleScrollToBottom = () => {
-    const host = scrollContainerRef.current;
-    if (!host) {
-      return;
+    const host = getScrollHost();
+    if (host) {
+      host.scrollTo({ top: host.scrollHeight, behavior: "smooth" });
+    } else if (typeof window !== "undefined" && typeof document !== "undefined") {
+      const target =
+        document.scrollingElement ?? document.documentElement ?? document.body;
+      const bottom =
+        target?.scrollHeight ??
+        Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+      window.scrollTo({ top: bottom, behavior: "smooth" });
     }
-    host.scrollTo({ top: host.scrollHeight, behavior: "smooth" });
     if (hasAssistantResponses) {
       setActiveAssistantIndex(assistantMessageCount - 1);
     }
