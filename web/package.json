@@ -26,6 +26,7 @@
     "clsx": "^2.1.1",
     "dexie": "^4.2.1",
     "dexie-react-hooks": "^4.2.0",
+    "firebase": "^12.5.0",
     "i18next": "^25.6.1",
     "microsoft-cognitiveservices-speech-sdk": "^1.46.0",
     "react": "^19.2.0",
