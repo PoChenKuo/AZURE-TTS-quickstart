@@ -120,7 +120,7 @@ export function AudioControlPanel() {
         <span>{t("audioPanel.rate")}</span>
         <select
           className="audio-control-panel__rate-select"
-          value={playbackRate.toFixed(2)}
+          value={playbackRate}
           onChange={(event) => handleRateChange(Number(event.target.value))}
         >
           {PLAYBACK_OPTIONS.map((option) => (
