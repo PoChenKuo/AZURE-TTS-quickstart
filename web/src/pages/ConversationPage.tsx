@@ -346,7 +346,8 @@ function ConversationSurface() {
           <ConversationLog
             messages={messages}
             utteranceById={utteranceById}
-            className="flex-1 min-h-0 overflow-y-auto md:pr-2"
+            className="flex-1 min-h-0"
+            contentClassName="md:pr-2"
             onRegenerateAudio={handleRegenerateAudio}
             sharedAudioRef={autoPlayAudioRef}
             onDeleteAudio={handleDeleteAudio}

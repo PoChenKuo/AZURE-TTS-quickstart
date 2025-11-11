@@ -86,6 +86,10 @@ const en = {
     retrying: "Retrying...",
     copy: "Copy",
     copied: "Copied!",
+    previousResponse: "Previous response",
+    nextResponse: "Next response",
+    scrollTop: "Scroll to top",
+    scrollBottom: "Scroll to bottom",
   },
   settings: {
     title: "Settings",

@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { RefObject } from "react";
 import { useTranslation } from "react-i18next";
 import { AudioPreview } from "./AudioPreview";
@@ -11,6 +11,7 @@ type ConversationLogProps = {
   messages: ChatMessage[];
   utteranceById: Map<number, UtteranceRecord>;
   className?: string;
+  contentClassName?: string;
   onRegenerateAudio?: (message: ChatMessage) => void;
   sharedAudioRef?: RefObject<HTMLAudioElement | null>;
   onDeleteAudio?: (message: ChatMessage) => void | Promise<void>;
@@ -29,6 +30,7 @@ export function ConversationLog({
   messages,
   utteranceById,
   className,
+  contentClassName,
   onRegenerateAudio,
   sharedAudioRef,
   onDeleteAudio,
@@ -47,20 +49,95 @@ export function ConversationLog({
     fallbackAudioRef;
   const { t } = useTranslation();
   const [copiedMessageId, setCopiedMessageId] = useState<number | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const assistantMessageRefs = useRef<Map<number, HTMLElement>>(new Map());
+  const assistantMessages = useMemo(
+    () =>
+      messages.filter(
+        (message): message is ChatMessage & { id: number } =>
+          message.role === "assistant" && typeof message.id === "number"
+      ),
+    [messages]
+  );
+  const assistantMessageCount = assistantMessages.length;
+  const [activeAssistantIndex, setActiveAssistantIndex] = useState(() =>
+    assistantMessageCount ? assistantMessageCount - 1 : -1
+  );
 
-  if (!messages.length) {
-    return (
-      <div className={clsx("flex flex-col gap-4", className)}>
-        <p className="text-sm text-slate-400">{t("conversation.empty")}</p>
-      </div>
-    );
-  }
+  useEffect(() => {
+    setActiveAssistantIndex((currentIndex) => {
+      if (!assistantMessageCount) {
+        return -1;
+      }
+      if (currentIndex === -1) {
+        return assistantMessageCount - 1;
+      }
+      return Math.min(currentIndex, assistantMessageCount - 1);
+    });
+  }, [assistantMessageCount]);
 
-  const containerClass = clsx("flex flex-col gap-4", className);
+  const hasMessages = messages.length > 0;
+  const hasAssistantResponses = assistantMessageCount > 0;
+  const hasPrevResponse = activeAssistantIndex > 0;
+  const hasNextResponse =
+    activeAssistantIndex >= 0 && activeAssistantIndex < assistantMessageCount - 1;
+
+  const wrapperClass = clsx("relative flex h-full min-h-0", className);
+  const scrollAreaClass = clsx(
+    "flex h-full w-full flex-col gap-4 overflow-y-auto",
+    contentClassName
+  );
+  const arrowButtonClass =
+    "pointer-events-auto rounded-full border border-white/30 bg-slate-900/80 p-2 text-lg leading-none text-white shadow-lg shadow-black/40 transition hover:border-cyan-300/70 hover:text-cyan-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 disabled:cursor-not-allowed disabled:opacity-40";
+
+  const scrollToAssistantIndex = (targetIndex: number) => {
+    if (
+      targetIndex < 0 ||
+      targetIndex >= assistantMessageCount ||
+      !hasAssistantResponses
+    ) {
+      return;
+    }
+    const targetMessage = assistantMessages[targetIndex];
+    if (!targetMessage?.id) {
+      return;
+    }
+    const targetNode = assistantMessageRefs.current.get(targetMessage.id);
+    if (targetNode) {
+      targetNode.scrollIntoView({ behavior: "smooth", block: "center" });
+      setActiveAssistantIndex(targetIndex);
+    }
+  };
+
+  const handleScrollToTop = () => {
+    const host = scrollContainerRef.current;
+    if (!host) {
+      return;
+    }
+    host.scrollTo({ top: 0, behavior: "smooth" });
+    if (hasAssistantResponses) {
+      setActiveAssistantIndex(0);
+    }
+  };
+
+  const handleScrollToBottom = () => {
+    const host = scrollContainerRef.current;
+    if (!host) {
+      return;
+    }
+    host.scrollTo({ top: host.scrollHeight, behavior: "smooth" });
+    if (hasAssistantResponses) {
+      setActiveAssistantIndex(assistantMessageCount - 1);
+    }
+  };
 
   return (
-    <div className={containerClass}>
-      {messages.map((message) => {
+    <div className={wrapperClass}>
+      <div ref={scrollContainerRef} className={scrollAreaClass}>
+        {!hasMessages && (
+          <p className="text-sm text-slate-400">{t("conversation.empty")}</p>
+        )}
+        {messages.map((message) => {
         const utterance = message.linkedUtteranceId
           ? utteranceById.get(message.linkedUtteranceId)
           : undefined;
@@ -82,6 +159,18 @@ export function ConversationLog({
         return (
           <article
             key={message.id}
+            ref={(node) => {
+              if (
+                message.role === "assistant" &&
+                typeof message.id === "number"
+              ) {
+                if (node) {
+                  assistantMessageRefs.current.set(message.id, node);
+                } else {
+                  assistantMessageRefs.current.delete(message.id);
+                }
+              }
+            }}
             className={clsx(
               "rounded-2xl border bg-slate-900/85 p-4 shadow-lg shadow-black/20 relative",
               message.role === "user"
@@ -189,7 +278,52 @@ export function ConversationLog({
           </article>
         );
       })}
-      {!sharedAudioRef && <audio ref={audioRef} className="hidden" />}
+        {!sharedAudioRef && <audio ref={audioRef} className="hidden" />}
+      </div>
+      <div className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 flex flex-col gap-3">
+        <button
+          type="button"
+          className={arrowButtonClass}
+          aria-label={t("log.previousResponse")}
+          title={t("log.previousResponse")}
+          onClick={() => scrollToAssistantIndex(activeAssistantIndex - 1)}
+          disabled={!hasPrevResponse}
+        >
+          &uarr;
+        </button>
+        <button
+          type="button"
+          className={arrowButtonClass}
+          aria-label={t("log.scrollTop")}
+          title={t("log.scrollTop")}
+          onClick={handleScrollToTop}
+          disabled={!hasMessages}
+        >
+          &uArr;
+        </button>
+      </div>
+      <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 flex flex-col gap-3">
+        <button
+          type="button"
+          className={arrowButtonClass}
+          aria-label={t("log.nextResponse")}
+          title={t("log.nextResponse")}
+          onClick={() => scrollToAssistantIndex(activeAssistantIndex + 1)}
+          disabled={!hasNextResponse}
+        >
+          &darr;
+        </button>
+        <button
+          type="button"
+          className={arrowButtonClass}
+          aria-label={t("log.scrollBottom")}
+          title={t("log.scrollBottom")}
+          onClick={handleScrollToBottom}
+          disabled={!hasMessages}
+        >
+          &dArr;
+        </button>
+      </div>
     </div>
   );
 }
