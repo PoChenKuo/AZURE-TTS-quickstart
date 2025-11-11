@@ -3,12 +3,13 @@ import {
   SettingsProvider,
   useSettingsContext,
 } from "../context/SettingsContext";
+import { useTranslation } from "react-i18next";
 
 const FONT_SCALE_OPTIONS = [
-  { label: "Compact (90%)", value: 0.9 },
-  { label: "Comfortable (100%)", value: 1 },
-  { label: "Relaxed (115%)", value: 1.15 },
-  { label: "Large (130%)", value: 1.3 },
+  { value: 0.9, labelKey: "settings.fontScaleOptions.compact" },
+  { value: 1, labelKey: "settings.fontScaleOptions.comfortable" },
+  { value: 1.15, labelKey: "settings.fontScaleOptions.relaxed" },
+  { value: 1.3, labelKey: "settings.fontScaleOptions.large" },
 ];
 
 // Presentation-only shell; actual settings logic lives in SettingsContext.
@@ -39,65 +40,63 @@ function SettingsSurface() {
     isImporting,
     fileInputRef,
   } = useSettingsContext();
+  const { t } = useTranslation();
 
   return (
     <>
       <section className="card grid">
         <header>
-          <h2>Settings</h2>
-          <p className="text-muted">
-            Keys stay inside IndexedDB. Use the testers to make sure everything works before heading
-            back to the conversation view.
-          </p>
+          <h2>{t("settings.title")}</h2>
+          <p className="text-muted">{t("settings.description")}</p>
         </header>
 
         <form onSubmit={handleSubmit} className="grid" style={{ gap: "1.1rem" }}>
           <div className="grid" style={{ gap: "0.4rem" }}>
-            <label className="label">Azure Speech Key</label>
+            <label className="label">{t("settings.azureSpeechKey")}</label>
             <input
               className="input"
               type="password"
-              placeholder="Paste your Azure Speech key"
+              placeholder={t("settings.azureSpeechKeyPlaceholder")}
               value={form.speechKey}
               onChange={(e) => handleChange("speechKey", e.target.value)}
             />
           </div>
 
           <div className="grid" style={{ gap: "0.4rem" }}>
-            <label className="label">Azure Endpoint URL</label>
+            <label className="label">{t("settings.azureEndpoint")}</label>
             <input
               className="input"
               type="text"
-              placeholder="https://<region>.tts.speech.microsoft.com/cognitiveservices/v1"
+              placeholder={t("settings.azureEndpointPlaceholder")}
               value={form.endpoint}
               onChange={(e) => handleChange("endpoint", e.target.value)}
             />
           </div>
 
           <div className="grid" style={{ gap: "0.4rem" }}>
-            <label className="label">Azure Region (optional)</label>
+            <label className="label">{t("settings.azureRegion")}</label>
             <input
               className="input"
               type="text"
-              placeholder="eastus"
+              placeholder={t("settings.azureRegionPlaceholder")}
               value={form.region}
               onChange={(e) => handleChange("region", e.target.value)}
             />
           </div>
 
           <div className="grid" style={{ gap: "0.4rem" }}>
-            <label className="label">Gemini API Key</label>
+            <label className="label">{t("settings.geminiKey")}</label>
             <input
               className="input"
               type="password"
-              placeholder="Paste your Gemini key"
+              placeholder={t("settings.geminiKeyPlaceholder")}
               value={form.geminiKey}
               onChange={(e) => handleChange("geminiKey", e.target.value)}
             />
           </div>
 
           <div className="grid" style={{ gap: "0.4rem" }}>
-            <label className="label">Gemini Model</label>
+            <label className="label">{t("settings.geminiModel")}</label>
             <select
               className="input"
               value={form.geminiModel}
@@ -113,12 +112,12 @@ function SettingsSurface() {
           </div>
 
           <div className="grid" style={{ gap: "0.4rem" }}>
-            <label className="label">Cleanup Interval (minutes)</label>
+            <label className="label">{t("settings.cleanupInterval")}</label>
             <input
               className="input"
               type="number"
               min={1}
-              max={1440}
+              max={120}
               value={form.cleanupIntervalMinutes}
               onChange={(e) =>
                 handleChange("cleanupIntervalMinutes", Number(e.target.value))
@@ -127,50 +126,48 @@ function SettingsSurface() {
           </div>
 
           <div className="grid" style={{ gap: "0.4rem" }}>
-          <label className="label">Default Voice</label>
-          <select
-            className="input"
-            value={form.defaultVoiceId ?? ""}
-            onChange={(e) =>
-              handleChange(
-                "defaultVoiceId",
-                e.target.value ? Number(e.target.value) : undefined
-              )
-            }
-          >
-            <option value="">Auto-select</option>
-            {voices.map((voice) => (
-              <option key={voice.id} value={voice.id}>
-                {voice.name} ({voice.locale})
-              </option>
-            ))}
-          </select>
-          {!voices.length && (
-            <p className="text-muted">
-              Add a voice in the Voice & Data manager to unlock this selector.
-            </p>
-          )}
-        </div>
+            <label className="label">{t("settings.defaultVoice")}</label>
+            <select
+              className="input"
+              value={form.defaultVoiceId ?? ""}
+              onChange={(e) =>
+                handleChange(
+                  "defaultVoiceId",
+                  e.target.value ? Number(e.target.value) : undefined
+                )
+              }
+            >
+              <option value="">{t("common.default")}</option>
+              {voices.map((voice) => (
+                <option key={voice.id} value={voice.id}>
+                  {voice.name} ({voice.locale})
+                </option>
+              ))}
+            </select>
+            {!voices.length && (
+              <p className="text-muted">{t("settings.voiceHelper")}</p>
+            )}
+          </div>
 
-        <div className="grid" style={{ gap: "0.4rem" }}>
-          <label className="label">Conversation font size</label>
-          <select
-            className="input"
-            value={form.conversationFontScale.toString()}
-            onChange={(e) =>
-              handleChange("conversationFontScale", Number(e.target.value))
-            }
-          >
-            {FONT_SCALE_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <p className="text-muted text-sm">
-            Controls how large the conversation log text appears.
-          </p>
-        </div>
+          <div className="grid" style={{ gap: "0.4rem" }}>
+            <label className="label">{t("settings.conversationFont")}</label>
+            <select
+              className="input"
+              value={form.conversationFontScale.toString()}
+              onChange={(e) =>
+                handleChange("conversationFontScale", Number(e.target.value))
+              }
+            >
+              {FONT_SCALE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {t(option.labelKey)}
+                </option>
+              ))}
+            </select>
+            <p className="text-muted text-sm">
+              {t("settings.conversationFontDescription")}
+            </p>
+          </div>
 
           <label className="label" style={{ gap: "0.5rem" }}>
             <input
@@ -178,12 +175,12 @@ function SettingsSurface() {
               checked={form.encryptionEnabled}
               onChange={(e) => handleChange("encryptionEnabled", e.target.checked)}
             />
-            Enable passphrase encryption (coming soon)
+            {t("settings.encryption")}
           </label>
 
           <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
             <button className="btn btn-primary" type="submit" disabled={isSaving}>
-              {isSaving ? "Saving..." : "Save changes"}
+              {isSaving ? t("settings.saving") : t("settings.save")}
             </button>
 
             <button
@@ -192,7 +189,7 @@ function SettingsSurface() {
               onClick={handleTestAzure}
               disabled={isTestingAzure}
             >
-              {isTestingAzure ? "Testing..." : "Test Azure Voice"}
+              {isTestingAzure ? t("settings.testingAzure") : t("settings.testAzure")}
             </button>
 
             <button
@@ -201,7 +198,9 @@ function SettingsSurface() {
               onClick={handleTestGemini}
               disabled={isTestingGemini}
             >
-              {isTestingGemini ? "Testing..." : "Test Gemini Ping"}
+              {isTestingGemini
+                ? t("settings.testingGemini")
+                : t("settings.testGemini")}
             </button>
           </div>
         </form>
@@ -209,10 +208,8 @@ function SettingsSurface() {
 
       <section className="card grid" style={{ gap: "0.75rem" }}>
         <header>
-          <h2>Data Backup</h2>
-          <p className="text-muted">
-            Export a JSON snapshot of all IndexedDB tables or restore from a previous backup.
-          </p>
+          <h2>{t("settings.backup.title")}</h2>
+          <p className="text-muted">{t("settings.backup.description")}</p>
         </header>
         <div className="flex flex-wrap gap-3">
           <button
@@ -221,7 +218,9 @@ function SettingsSurface() {
             onClick={handleExportBackup}
             disabled={isExporting}
           >
-            {isExporting ? "Exporting…" : "Export backup"}
+            {isExporting
+              ? t("settings.backup.exporting")
+              : t("settings.backup.export")}
           </button>
           <button
             type="button"
@@ -229,13 +228,12 @@ function SettingsSurface() {
             onClick={handleImportBackupClick}
             disabled={isImporting}
           >
-            {isImporting ? "Importing…" : "Import backup"}
+            {isImporting
+              ? t("settings.backup.importing")
+              : t("settings.backup.import")}
           </button>
         </div>
-        <p className="text-muted text-sm">
-          Importing will overwrite your existing chats, voices, and cached audio. Make sure you
-          trust the backup file.
-        </p>
+        <p className="text-muted text-sm">{t("settings.backup.warning")}</p>
         <input
           ref={fileInputRef}
           type="file"
