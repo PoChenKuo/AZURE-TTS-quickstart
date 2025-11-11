@@ -196,7 +196,6 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
     sessionCacheState,
     activeSession,
     defaultVoice,
-    onSuccess: () => setInput(""),
   });
 
   useAutoPlayAssistantAudio(

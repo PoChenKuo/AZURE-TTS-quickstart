@@ -57,7 +57,6 @@ function ConversationSurface() {
     handleRetryResponse,
     retryingMessageIds,
     playbackRate,
-    setPlaybackRate,
     input,
     setInput,
     handleSubmit,
