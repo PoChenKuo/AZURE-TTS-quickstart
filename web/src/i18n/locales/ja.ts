@@ -171,6 +171,8 @@ const ja = {
     deleteMessage: "削除",
     retryResponse: "Gemini の回答をやり直す",
     retrying: "再試行中...",
+    copy: "コピー",
+    copied: "コピーしました",
   },
 };
 

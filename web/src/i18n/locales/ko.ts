@@ -171,6 +171,8 @@ const ko = {
     deleteMessage: "삭제",
     retryResponse: "Gemini 응답 다시 요청",
     retrying: "다시 요청 중...",
+    copy: "복사",
+    copied: "복사 완료",
   },
 };
 

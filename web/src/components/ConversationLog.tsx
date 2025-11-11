@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import type { RefObject } from "react";
 import { useTranslation } from "react-i18next";
 import { AudioPreview } from "./AudioPreview";
@@ -46,6 +46,7 @@ export function ConversationLog({
     (sharedAudioRef as RefObject<HTMLAudioElement | null> | undefined) ??
     fallbackAudioRef;
   const { t } = useTranslation();
+  const [copiedMessageId, setCopiedMessageId] = useState<number | null>(null);
 
   if (!messages.length) {
     return (
@@ -82,7 +83,7 @@ export function ConversationLog({
           <article
             key={message.id}
             className={clsx(
-              "rounded-2xl border bg-slate-900/85 p-4 shadow-lg shadow-black/20",
+              "rounded-2xl border bg-slate-900/85 p-4 shadow-lg shadow-black/20 relative",
               message.role === "user"
                 ? "border-emerald-300/40"
                 : "border-sky-300/40"
@@ -162,6 +163,29 @@ export function ConversationLog({
                 </button>
               </div>
             )}
+            <button
+              type="button"
+              className="log-copy-button"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(message.content);
+                  if (message.id != null) {
+                    setCopiedMessageId(message.id);
+                    window.setTimeout(() => {
+                      setCopiedMessageId((current) =>
+                        current === message.id ? null : current
+                      );
+                    }, 2000);
+                  }
+                } catch (error) {
+                  console.error("Failed to copy message", error);
+                }
+              }}
+            >
+              {copiedMessageId === message.id
+                ? t("log.copied")
+                : t("log.copy")}
+            </button>
           </article>
         );
       })}

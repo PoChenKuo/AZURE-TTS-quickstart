@@ -84,6 +84,8 @@ const en = {
     deleteMessage: "Delete",
     retryResponse: "Retry Gemini response",
     retrying: "Retrying...",
+    copy: "Copy",
+    copied: "Copied!",
   },
   settings: {
     title: "Settings",

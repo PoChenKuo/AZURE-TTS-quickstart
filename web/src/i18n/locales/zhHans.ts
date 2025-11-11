@@ -171,6 +171,8 @@ const zhHans = {
     deleteMessage: "删除",
     retryResponse: "重新请求 Gemini 回复",
     retrying: "重新请求中...",
+    copy: "复制",
+    copied: "已复制",
   },
 };
 

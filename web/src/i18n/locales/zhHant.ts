@@ -171,6 +171,8 @@ const zhHant = {
     deleteMessage: "刪除",
     retryResponse: "重新請求 Gemini 回覆",
     retrying: "重新請求中...",
+    copy: "複製",
+    copied: "已複製",
   },
 };
 
