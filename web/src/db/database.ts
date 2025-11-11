@@ -114,6 +114,22 @@ export class AppDatabase extends Dexie {
           }
         });
       });
+    this.version(7)
+      .stores({
+        settings: "id",
+        voices: "++id, name, locale, isDefault",
+        utterances: "++id, expiresUtc, createdUtc",
+        chats: "++id, sessionId, createdUtc",
+        workerLogs: "++id, createdUtc",
+        chatSessions: "++id, updatedUtc",
+      })
+      .upgrade(async (tx) => {
+        const table = tx.table("settings");
+        const record = await table.get(1);
+        if (record && typeof record.conversationFontScale === "undefined") {
+          await table.update(1, { conversationFontScale: 1 });
+        }
+      });
   }
 }
 
