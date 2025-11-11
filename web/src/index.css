@@ -46,17 +46,6 @@ select {
   resize: vertical;
 }
 
-.app-shell {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.app-main {
-  flex: 1;
-  width: min(1200px, calc(100% - 2rem));
-  margin: 2rem auto 3rem;
-}
 
 .app-header {
   position: sticky;
@@ -124,7 +113,7 @@ select {
 
 @media screen and (max-width: 640px) {
   .card {
-    padding: 0rem;
+    padding: 1rem 0.5rem;
   }
 }
 .grid {
@@ -145,43 +134,6 @@ select {
   outline: none;
   border-color: #38bdf8;
   background: rgba(15, 23, 42, 0.85);
-}
-
-.btn {
-  border: none;
-  border-radius: 999px;
-  padding: 0.65rem 1.5rem;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  cursor: pointer;
-  transition: transform 0.15s ease, opacity 0.15s ease;
-}
-
-.btn-primary {
-  background: linear-gradient(120deg, #0ea5e9, #6366f1);
-  color: white;
-}
-
-.btn-secondary {
-  background: rgba(148, 163, 184, 0.2);
-  color: #e2e8f0;
-}
-
-.btn-text {
-  background: transparent;
-  color: #93c5fd;
-}
-
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btn:not(:disabled):active {
-  transform: scale(0.97);
 }
 
 .label {
@@ -248,50 +200,6 @@ select {
   display: flex;
   gap: 0.4rem;
   flex-wrap: wrap;
-}
-
-.voice-select {
-  min-width: 0;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.voice-select:focus-within {
-  border-color: rgba(14, 165, 233, 0.6);
-  box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.25);
-}
-
-.voice-select-control {
-  position: relative;
-  min-width: 160px;
-}
-
-.voice-select-input {
-  width: 100%;
-  appearance: none;
-  border: none;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  padding-right: 1.5rem;
-}
-
-.voice-select-input:disabled {
-  opacity: 0.65;
-}
-
-.voice-select-input option {
-  color: #0f172a;
-  background: #e2e8f0;
-}
-
-.voice-select-arrow {
-  position: absolute;
-  right: 0.35rem;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 0.8rem;
-  color: #94a3b8;
-  pointer-events: none;
 }
 
 .playback-select {

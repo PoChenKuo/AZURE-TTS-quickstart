@@ -65,7 +65,7 @@ function AppLayout({ children }: PropsWithChildren) {
         </div>
       </header>
 
-      <main className="app-main">{children}</main>
+      <main className="app-main mb-2 ml-auto mr-auto mt-1 md:mt-4  md:mt-2 md:mb-2">{children}</main>
       <ToastHost />
     </div>
   );

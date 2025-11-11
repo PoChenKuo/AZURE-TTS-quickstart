@@ -61,7 +61,7 @@ function ConversationSurface() {
   } = useConversationContext();
 
   return (
-    <div className="flex gap-5 h-[calc(100vh-160px)] min-h-0 overflow-hidden max-lg:flex-col max-lg:h-auto max-lg:overflow-visible">
+    <div className="flex gap-5 h-[calc(100vh-110px)] min-h-0 overflow-hidden max-lg:flex-col max-lg:h-auto max-lg:overflow-visible">
       <SessionSidebar
         sessions={sessions}
         activeSessionId={activeSessionId}
@@ -276,7 +276,7 @@ function ConversationSurface() {
           <ConversationLog
             messages={messages}
             utteranceById={utteranceById}
-            className="flex-1 min-h-0 overflow-y-auto pr-2"
+            className="flex-1 min-h-0 overflow-y-auto md:pr-2"
             onRegenerateAudio={handleRegenerateAudio}
             sharedAudioRef={autoPlayAudioRef}
             onDeleteAudio={handleDeleteAudio}
