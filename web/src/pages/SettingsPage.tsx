@@ -4,6 +4,13 @@ import {
   useSettingsContext,
 } from "../context/SettingsContext";
 
+const FONT_SCALE_OPTIONS = [
+  { label: "Compact (90%)", value: 0.9 },
+  { label: "Comfortable (100%)", value: 1 },
+  { label: "Relaxed (115%)", value: 1.15 },
+  { label: "Large (130%)", value: 1.3 },
+];
+
 // Presentation-only shell; actual settings logic lives in SettingsContext.
 function SettingsPage() {
   return (
@@ -111,7 +118,7 @@ function SettingsSurface() {
               className="input"
               type="number"
               min={1}
-              max={120}
+              max={1440}
               value={form.cleanupIntervalMinutes}
               onChange={(e) =>
                 handleChange("cleanupIntervalMinutes", Number(e.target.value))
@@ -120,30 +127,50 @@ function SettingsSurface() {
           </div>
 
           <div className="grid" style={{ gap: "0.4rem" }}>
-            <label className="label">Default Voice</label>
-            <select
-              className="input"
-              value={form.defaultVoiceId ?? ""}
-              onChange={(e) =>
-                handleChange(
-                  "defaultVoiceId",
-                  e.target.value ? Number(e.target.value) : undefined
-                )
-              }
-            >
-              <option value="">Auto-select</option>
-              {voices.map((voice) => (
-                <option key={voice.id} value={voice.id}>
-                  {voice.name} ({voice.locale})
-                </option>
-              ))}
-            </select>
-            {!voices.length && (
-              <p className="text-muted">
-                Add a voice in the Voice & Data manager to unlock this selector.
-              </p>
-            )}
-          </div>
+          <label className="label">Default Voice</label>
+          <select
+            className="input"
+            value={form.defaultVoiceId ?? ""}
+            onChange={(e) =>
+              handleChange(
+                "defaultVoiceId",
+                e.target.value ? Number(e.target.value) : undefined
+              )
+            }
+          >
+            <option value="">Auto-select</option>
+            {voices.map((voice) => (
+              <option key={voice.id} value={voice.id}>
+                {voice.name} ({voice.locale})
+              </option>
+            ))}
+          </select>
+          {!voices.length && (
+            <p className="text-muted">
+              Add a voice in the Voice & Data manager to unlock this selector.
+            </p>
+          )}
+        </div>
+
+        <div className="grid" style={{ gap: "0.4rem" }}>
+          <label className="label">Conversation font size</label>
+          <select
+            className="input"
+            value={form.conversationFontScale.toString()}
+            onChange={(e) =>
+              handleChange("conversationFontScale", Number(e.target.value))
+            }
+          >
+            {FONT_SCALE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <p className="text-muted text-sm">
+            Controls how large the conversation log text appears.
+          </p>
+        </div>
 
           <label className="label" style={{ gap: "0.5rem" }}>
             <input

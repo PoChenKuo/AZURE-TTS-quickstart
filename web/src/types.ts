@@ -9,6 +9,7 @@ export type AppSettings = {
   defaultVoiceId?: number;
   encryptionEnabled: boolean;
   lastVerifiedUtc?: string;
+  conversationFontScale?: number;
 };
 
 export type VoiceProfile = {

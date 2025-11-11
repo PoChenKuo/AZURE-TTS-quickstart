@@ -87,6 +87,7 @@ type ConversationContextValue = {
   selectedVoiceId: string;
   handleVoiceChange: (event: ChangeEvent<HTMLSelectElement>) => Promise<void>;
   isUpdatingVoice: boolean;
+  conversationFontScale: number;
 };
 
 const ConversationContext = createContext<ConversationContextValue | undefined>(
@@ -150,6 +151,7 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
     [voices]
   );
   const selectedVoiceId = defaultVoice?.id != null ? String(defaultVoice.id) : "";
+  const conversationFontScale = settings?.conversationFontScale ?? 1;
 
   const activeSession = sessions?.find((session) => session.id === activeSessionId);
   const sessionCacheState = activeSession
@@ -451,6 +453,7 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
     selectedVoiceId,
     handleVoiceChange,
     isUpdatingVoice,
+    conversationFontScale,
   };
 
   return (
@@ -476,5 +479,6 @@ function normalizeSettingsRecord(settings: AppSettings): AppSettings {
     speechKey: settings.speechKey ?? undefined,
     endpoint: settings.endpoint ?? undefined,
     geminiModel: settings.geminiModel ?? DEFAULT_GEMINI_MODEL,
+    conversationFontScale: settings.conversationFontScale ?? 1,
   };
 }

@@ -6,6 +6,7 @@ export const defaultSettings: AppSettings = {
   cleanupIntervalMinutes: 5,
   encryptionEnabled: false,
   geminiModel: DEFAULT_GEMINI_MODEL,
+  conversationFontScale: 1,
 };
 
 export const defaultVoiceProfiles: VoiceProfile[] = [

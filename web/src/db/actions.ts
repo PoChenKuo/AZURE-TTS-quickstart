@@ -13,6 +13,7 @@ export async function saveSettings(update: Partial<AppSettings>) {
     id: 1,
     cleanupIntervalMinutes: 5,
     encryptionEnabled: false,
+    conversationFontScale: 1,
     ...update,
   });
 }

@@ -18,6 +18,7 @@ type ConversationLogProps = {
   onDeleteMessage?: (message: ChatMessage) => void | Promise<void>;
   deletingMessageIds?: Set<number>;
   playbackRate?: number;
+  fontScale?: number;
 };
 
 // Displays the chronological transcript plus any cached audio previews.
@@ -32,6 +33,7 @@ export function ConversationLog({
   onDeleteMessage,
   deletingMessageIds,
   playbackRate = 1,
+  fontScale = 1,
 }: ConversationLogProps) {
   const fallbackAudioRef = useRef<HTMLAudioElement | null>(null);
   const audioRef =
@@ -94,7 +96,10 @@ export function ConversationLog({
                 )}
               </div>
             </div>
-            <div className="markdown-body text-slate-100">
+            <div
+              className="markdown-body text-slate-100"
+              style={{ fontSize: `${fontScale}rem` }}
+            >
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={{

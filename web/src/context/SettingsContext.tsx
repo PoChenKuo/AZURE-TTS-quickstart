@@ -19,6 +19,7 @@ import {
 import { synthesizeWithAzure } from "../lib/azureSpeech";
 import { createAudioUrl, generateToneWav } from "../lib/audio";
 import { exportDatabase, importDatabase } from "../lib/dataBackup";
+import { uploadBackupToDrive } from "../lib/googleDrive";
 
 export type SettingsFormState = {
   speechKey: string;
@@ -29,6 +30,7 @@ export type SettingsFormState = {
   cleanupIntervalMinutes: number;
   encryptionEnabled: boolean;
   defaultVoiceId?: number;
+  conversationFontScale: number;
 };
 
 const EMPTY_STATE: SettingsFormState = {
@@ -40,6 +42,7 @@ const EMPTY_STATE: SettingsFormState = {
   cleanupIntervalMinutes: 5,
   encryptionEnabled: false,
   defaultVoiceId: undefined,
+  conversationFontScale: 1,
 };
 
 type SettingsContextValue = {
@@ -92,6 +95,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       cleanupIntervalMinutes: settings.cleanupIntervalMinutes ?? 5,
       encryptionEnabled: settings.encryptionEnabled ?? false,
       defaultVoiceId: settings.defaultVoiceId,
+      conversationFontScale: settings.conversationFontScale ?? 1,
     });
   }, [settings]);
 
@@ -123,6 +127,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     encryptionEnabled: form.encryptionEnabled,
     defaultVoiceId: form.defaultVoiceId,
     lastVerifiedUtc: settings?.lastVerifiedUtc,
+    conversationFontScale: form.conversationFontScale || 1,
   };
 
   const handleChange = (
@@ -199,22 +204,16 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   async function handleExportBackup() {
     setIsExporting(true);
+    const filename = `IndexedSpeech-backup-${new Date()
+      .toISOString()
+      .replace(/[:.]/g, "-")}.json`;
     try {
       const snapshot = await exportDatabase();
-      const blob = new Blob([JSON.stringify(snapshot, null, 2)], {
-        type: "application/json",
-      });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `indexed-speech-backup-${new Date()
-        .toISOString()
-        .replace(/[:.]/g, "-")}.json`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
-      pushToast("Exported backup.", "success");
+      const uploaded = await tryUploadToDrive(filename, snapshot);
+      if (!uploaded) {
+        downloadSnapshot(snapshot, filename);
+        pushToast("Exported backup locally.", "success");
+      }
     } catch (error) {
       console.error(error);
       pushToast("Failed to export backup.", "error");
@@ -247,6 +246,32 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       pushToast("Failed to import backup.", "error");
     } finally {
       setIsImporting(false);
+    }
+  }
+
+  function downloadSnapshot(snapshot: unknown, filename: string) {
+    const blob = new Blob([JSON.stringify(snapshot, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  async function tryUploadToDrive(filename: string, snapshot: unknown) {
+    try {
+      await uploadBackupToDrive(filename, snapshot);
+      pushToast("Uploaded backup to Google Drive.", "success");
+      return true;
+    } catch (error) {
+      console.warn("Drive upload failed; falling back to download.", error);
+      pushToast("Drive upload failed. Downloading instead.", "info");
+      return false;
     }
   }
 

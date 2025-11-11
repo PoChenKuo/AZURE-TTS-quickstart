@@ -58,6 +58,7 @@ function ConversationSurface() {
     setInput,
     handleSubmit,
     isMessagePending,
+    conversationFontScale,
   } = useConversationContext();
 
   return (
@@ -284,6 +285,7 @@ function ConversationSurface() {
             onDeleteMessage={handleDeleteMessage}
             deletingMessageIds={deletingMessageIds}
             playbackRate={playbackRate}
+            fontScale={conversationFontScale}
           />
 
           <MessageComposer
