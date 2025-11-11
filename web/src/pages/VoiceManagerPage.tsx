@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import type { FormEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { useVoices, useUtterances, useWorkerLogs } from "../db/hooks";
 import {
   deleteUtterance,
@@ -36,6 +37,7 @@ function VoiceManagerPage() {
   const [voiceForm, setVoiceForm] = useState<VoiceFormState>(EMPTY_VOICE_FORM);
   const [isSavingVoice, setIsSavingVoice] = useState(false);
   const [isCleaning, setIsCleaning] = useState(false);
+  const { t } = useTranslation();
 
   const totalAudioSize = useMemo(() => {
     return utterances.reduce((acc, item) => acc + (item.size || 0), 0);
@@ -48,7 +50,7 @@ function VoiceManagerPage() {
   async function handleAddVoice(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!voiceForm.name.trim()) {
-      pushToast("Voice name is required.", "error");
+      pushToast(t("voice.messages.nameRequired"), "error");
       return;
     }
     setIsSavingVoice(true);
@@ -65,11 +67,11 @@ function VoiceManagerPage() {
     try {
       await upsertVoice(payload);
       setVoiceForm(EMPTY_VOICE_FORM);
-      pushToast("Voice saved.", "success");
+      pushToast(t("voice.messages.voiceSaved"), "success");
     }
     catch (error) {
       console.error(error);
-      pushToast("Failed to save voice.", "error");
+      pushToast(t("voice.messages.voiceSaveFailed"), "error");
     }
     finally {
       setIsSavingVoice(false);
@@ -81,11 +83,11 @@ function VoiceManagerPage() {
       return;
     }
     if (voice.isDefault) {
-      pushToast("Set another default voice first.", "error");
+      pushToast(t("voice.messages.setDefaultFirst"), "error");
       return;
     }
     await deleteVoice(voice.id);
-    pushToast(`Voice "${voice.name}" deleted.`, "info");
+    pushToast(t("voice.messages.voiceDeleted", { name: voice.name }), "info");
   }
 
   async function handleCleanup() {
@@ -102,10 +104,8 @@ function VoiceManagerPage() {
     <div className="grid" style={{ gap: "1.5rem" }}>
       <section className="card grid" style={{ gap: "1rem" }}>
         <header>
-          <h2>Voice Library</h2>
-          <p className="text-muted">
-            Manage the voices available to the conversation view. Import/export support is coming soon.
-          </p>
+          <h2>{t("voice.voiceLibrary")}</h2>
+          <p className="text-muted">{t("voice.voiceLibraryDesc")}</p>
         </header>
 
         <div className="table-wrapper">
@@ -122,20 +122,22 @@ function VoiceManagerPage() {
             <tbody>
               {voices.map((voice) => (
                 <tr key={voice.id}>
-                  <td data-label="Name">
+                  <td data-label={t("voice.table.name")}>
                     {voice.name}
                     {voice.isDefault && (
                       <span className="pill" style={{ marginLeft: "0.4rem" }}>
-                        Default
+                        {t("voice.table.defaultBadge")}
                       </span>
                     )}
                   </td>
-                  <td data-label="Locale">{voice.locale}</td>
-                  <td data-label="Style">{voice.style ?? "general"}</td>
-                  <td data-label="Voice ID" className="text-muted">
-                    {voice.azureVoiceId ?? "n/a"}
+                  <td data-label={t("voice.table.locale")}>{voice.locale}</td>
+                  <td data-label={t("voice.table.style")}>
+                    {voice.style ?? t("voice.messages.defaultStyle")}
                   </td>
-                  <td data-label="Actions">
+                  <td data-label={t("voice.table.voiceId")} className="text-muted">
+                    {voice.azureVoiceId ?? t("voice.messages.notAvailable")}
+                  </td>
+                  <td data-label={t("voice.table.actions")}>
                     <div className="table-actions">
                       <button
                         className="btn btn-secondary"
@@ -146,17 +148,20 @@ function VoiceManagerPage() {
                             return;
                           }
                           await setDefaultVoice(voice.id);
-                          pushToast(`"${voice.name}" is now the default voice.`, "success");
+                          pushToast(
+                            t("voice.messages.defaultSet", { name: voice.name }),
+                            "success"
+                          );
                         }}
                       >
-                        Set default
+                        {t("voice.actions.setDefault")}
                       </button>
                       <button
                         className="btn btn-text"
                         type="button"
                         onClick={() => handleDeleteVoice(voice)}
                       >
-                        Delete
+                        {t("voice.actions.delete")}
                       </button>
                     </div>
                   </td>
@@ -165,7 +170,7 @@ function VoiceManagerPage() {
               {!voices.length && (
                 <tr>
                   <td colSpan={5} className="text-muted">
-                    No voices yet. Use the form below to add your first entry.
+                    {t("voice.noVoices")}
                   </td>
                 </tr>
               )}
@@ -174,39 +179,39 @@ function VoiceManagerPage() {
         </div>
 
         <form onSubmit={handleAddVoice} className="grid" style={{ gap: "0.8rem" }}>
-          <h3>Add / Edit Voice</h3>
+          <h3>{t("voice.form.title")}</h3>
           <input
             className="input"
-            placeholder="Voice name"
+            placeholder={t("voice.form.namePlaceholder")}
             value={voiceForm.name}
             onChange={(e) => updateVoiceForm("name", e.target.value)}
           />
           <input
             className="input"
-            placeholder="Locale (e.g., en-US)"
+            placeholder={t("voice.form.localePlaceholder")}
             value={voiceForm.locale}
             onChange={(e) => updateVoiceForm("locale", e.target.value)}
           />
           <input
             className="input"
-            placeholder="Azure voice ID (optional)"
+            placeholder={t("voice.form.azureIdPlaceholder")}
             value={voiceForm.azureVoiceId}
             onChange={(e) => updateVoiceForm("azureVoiceId", e.target.value)}
           />
           <input
             className="input"
-            placeholder="Style (casual, news, general...)"
+            placeholder={t("voice.form.stylePlaceholder")}
             value={voiceForm.style}
             onChange={(e) => updateVoiceForm("style", e.target.value)}
           />
           <input
             className="input"
-            placeholder="Tags (comma separated)"
+            placeholder={t("voice.form.tagsPlaceholder")}
             value={voiceForm.tags}
             onChange={(e) => updateVoiceForm("tags", e.target.value)}
           />
           <button className="btn btn-primary" type="submit" disabled={isSavingVoice}>
-            {isSavingVoice ? "Saving..." : "Save Voice"}
+            {isSavingVoice ? t("voice.form.saving") : t("voice.form.save")}
           </button>
         </form>
       </section>
@@ -214,13 +219,16 @@ function VoiceManagerPage() {
       <section className="card grid" style={{ gap: "1rem" }}>
         <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
           <div>
-            <h2>Cached Audio</h2>
+            <h2>{t("voice.cachedAudio")}</h2>
             <p className="text-muted">
-              {utterances.length} clips | {formatBytes(totalAudioSize)}
+              {t("voice.messages.cachedSummary", {
+                count: utterances.length,
+                size: formatBytes(totalAudioSize),
+              })}
             </p>
           </div>
           <button className="btn btn-secondary" type="button" onClick={handleCleanup} disabled={isCleaning}>
-            {isCleaning ? "Cleaning..." : "Run cleanup now"}
+            {isCleaning ? t("voice.messages.cleaning") : t("voice.messages.runCleanup")}
           </button>
         </header>
 
@@ -239,10 +247,14 @@ function VoiceManagerPage() {
                 <div>
                   <p style={{ margin: 0, fontWeight: 600 }}>{utterance.text.slice(0, 60)}{utterance.text.length > 60 ? "..." : ""}</p>
                   <p className="text-muted" style={{ margin: 0 }}>
-                    Expires {new Date(utterance.expiresUtc).toLocaleString()}
+                    {t("voice.messages.expiresLabel", {
+                      time: new Date(utterance.expiresUtc).toLocaleString(),
+                    })}
                   </p>
                   <p className="text-muted" style={{ margin: 0 }}>
-                    {formatBytes(utterance.size)}
+                    {t("voice.messages.sizeLabel", {
+                      size: formatBytes(utterance.size),
+                    })}
                   </p>
                 </div>
                 <button
@@ -253,23 +265,23 @@ function VoiceManagerPage() {
                       return;
                     }
                     await deleteUtterance(utterance.id);
-                    pushToast("Deleted audio clip.", "info");
+                    pushToast(t("voice.messages.audioDeleted"), "info");
                   }}
                 >
-                  Delete
+                  {t("voice.actions.delete")}
                 </button>
               </div>
               <AudioPreview buffer={utterance.audioBlob} />
             </article>
           ))}
           {!utterances.length && (
-            <p className="text-muted">No cached audio blobs yet--send a Gemini prompt to generate one.</p>
+            <p className="text-muted">{t("voice.cachedAudioEmpty")}</p>
           )}
         </div>
       </section>
 
       <section className="card grid" style={{ gap: "0.8rem" }}>
-        <h2>Worker Log</h2>
+        <h2>{t("voice.workerLog")}</h2>
         <ul className="list-reset" style={{ display: "grid", gap: "0.5rem" }}>
           {workerLogs.map((log) => (
             <li key={log.id} className="text-muted">
@@ -278,7 +290,7 @@ function VoiceManagerPage() {
             </li>
           ))}
           {!workerLogs.length && (
-            <li className="text-muted">No messages yet.</li>
+            <li className="text-muted">{t("voice.noLogs")}</li>
           )}
         </ul>
       </section>
