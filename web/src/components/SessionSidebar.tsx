@@ -93,6 +93,9 @@ export function SessionSidebar({
                       <button
                         type="submit"
                         className="rounded-full bg-sky-600 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white hover:bg-sky-500"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                        }}
                       >
                         {t("sidebar.save")}
                       </button>
