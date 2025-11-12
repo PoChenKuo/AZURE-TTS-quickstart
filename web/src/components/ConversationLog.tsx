@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { RefObject } from "react";
 import { useTranslation } from "react-i18next";
 import { AudioPreview } from "./AudioPreview";
@@ -113,13 +113,13 @@ export function ConversationLog({
     }
   };
 
-  const getScrollHost = () => {
+  const getScrollHost = useCallback(() => {
     const host = scrollContainerRef.current;
     if (host && host.scrollHeight > host.clientHeight + 1) {
       return host;
     }
     return null;
-  };
+  }, [scrollContainerRef]);
 
   const handleScrollToTop = () => {
     const host = getScrollHost();
@@ -149,6 +149,86 @@ export function ConversationLog({
       setActiveAssistantIndex(assistantMessageCount - 1);
     }
   };
+
+  const updateActiveAssistantIndexFromScroll = useCallback(() => {
+    if (!hasAssistantResponses || typeof window === "undefined") {
+      return;
+    }
+
+    const host = getScrollHost();
+    const viewportRect = host?.getBoundingClientRect();
+    const viewportTop = viewportRect?.top ?? 0;
+    const viewportBottom = viewportRect?.bottom ?? window.innerHeight;
+    const viewportHeight = Math.max(1, viewportBottom - viewportTop);
+    const anchorY = viewportTop + Math.min(viewportHeight * 0.25, 200);
+
+    let nextIndex = -1;
+    let firstBelowAnchor = -1;
+
+    for (let index = 0; index < assistantMessageCount; index += 1) {
+      const message = assistantMessages[index];
+      const node = assistantMessageRefs.current.get(message.id);
+      if (!node) {
+        continue;
+      }
+      const rect = node.getBoundingClientRect();
+      const spansAnchor = rect.top <= anchorY && rect.bottom >= anchorY;
+      if (spansAnchor) {
+        nextIndex = index;
+        break;
+      }
+      if (firstBelowAnchor === -1 && rect.top > anchorY) {
+        firstBelowAnchor = index;
+      }
+    }
+
+    if (nextIndex === -1) {
+      if (firstBelowAnchor !== -1) {
+        nextIndex = firstBelowAnchor;
+      } else {
+        nextIndex = assistantMessageCount - 1;
+      }
+    }
+
+    setActiveAssistantIndex((currentIndex) =>
+      currentIndex === nextIndex ? currentIndex : nextIndex
+    );
+  }, [
+    assistantMessageCount,
+    assistantMessages,
+    getScrollHost,
+    hasAssistantResponses,
+  ]);
+
+  useEffect(() => {
+    if (!hasAssistantResponses || typeof window === "undefined") {
+      return;
+    }
+
+    let animationFrame = 0;
+    const handleScroll = () => {
+      if (animationFrame) {
+        return;
+      }
+      animationFrame = window.requestAnimationFrame(() => {
+        animationFrame = 0;
+        updateActiveAssistantIndexFromScroll();
+      });
+    };
+
+    const host = getScrollHost();
+    host?.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    updateActiveAssistantIndexFromScroll();
+
+    return () => {
+      if (animationFrame) {
+        window.cancelAnimationFrame(animationFrame);
+      }
+      host?.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [getScrollHost, hasAssistantResponses, updateActiveAssistantIndexFromScroll]);
 
   return (
     <div className={wrapperClass}>
