@@ -77,7 +77,7 @@ function AppLayout({ children }: PropsWithChildren) {
                 "header-controls-mobile text-right": isCompact,
               })}
             >
-              <nav className="nav-links">
+              <nav className="nav-links whitespace-pre">
                 {NAV_LINKS.map((link) => (
                   <NavLink
                     key={link.to}
@@ -107,7 +107,7 @@ function AppLayout({ children }: PropsWithChildren) {
                     ))}
                   </select>
                 </label>
-                <div className="pill">
+                <div className="pill whitespace-pre">
                   {lastCleanupRun
                     ? t("app.cleanup.last", {
                         time: new Date(lastCleanupRun).toLocaleTimeString(),
