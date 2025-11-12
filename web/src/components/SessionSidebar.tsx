@@ -54,7 +54,7 @@ export function SessionSidebar({
       <button className="btn btn-secondary w-full" type="button" onClick={onNewChat}>
         {t("sidebar.newChat")}
       </button>
-      <div className="flex flex-col gap-2 max-h-[70vh] overflow-y-auto pr-1">
+      <div className="flex flex-col gap-2 max-h-[70vh] overflow-y-auto box-border p-px">
         {(sessions ?? []).map((session) => {
           const isActive = session.id === activeSessionId;
           return (
