@@ -108,7 +108,7 @@ export function ConversationLog({
     }
     const targetNode = assistantMessageRefs.current.get(targetMessage.id);
     if (targetNode) {
-      targetNode.scrollIntoView({ behavior: "smooth", block: "center" });
+      targetNode.scrollIntoView({ behavior: "smooth", block: "start" });
       setActiveAssistantIndex(targetIndex);
     }
   };

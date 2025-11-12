@@ -54,6 +54,15 @@ select {
   background: rgba(2, 6, 23, 0.85);
   border-bottom: 1px solid rgba(15, 23, 42, 0.5);
 }
+@media screen and (max-width: 1023px) {
+  .app-header {
+    opacity: 0.8;
+    transition: 0.16s ease-in;
+  }
+  .app-header:hover {
+    opacity: 1;
+  }
+}
 
 .header-inner {
   width: min(1200px, calc(100% - 2rem));
@@ -231,7 +240,7 @@ select {
     right: auto;
   }
 
-  .audio-control-panel::before{
+  .audio-control-panel::before {
     display: none;
   }
 }
