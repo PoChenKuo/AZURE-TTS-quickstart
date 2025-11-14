@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import clsx from "clsx";
 import { useConversationContext } from "../context/ConversationContext";
+import "./AudioControlPanel.less";
 
 const PLAYBACK_OPTIONS = [0.75, 1, 1.25, 1.5, 1.75, 2, 2.5];
 

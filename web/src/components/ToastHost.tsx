@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useToastStore } from "../state/toastStore";
+import "./ToastHost.less";
 
 const TOAST_DURATION = 4500;
 

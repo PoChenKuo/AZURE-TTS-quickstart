@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import type { RefObject } from "react";
 import { AudioPreview } from "./AudioPreview";
 import type { ChatMessage, UtteranceRecord } from "../types";
+import "./ConversationMessage.less";
 
 type ConversationMessageProps = {
   message: ChatMessage;
@@ -158,4 +159,3 @@ export function ConversationMessage({
     </article>
   );
 }
-

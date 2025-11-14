@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { useUIStore } from "../state/uiStore";
 import { ToastHost } from "./ToastHost";
 import { LANG_OPTIONS } from "../i18n";
+import "./AppLayout.less";
 
 const NAV_LINKS = [
   { to: "/conversation", key: "app.nav.conversation" },
