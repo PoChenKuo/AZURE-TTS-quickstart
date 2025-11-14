@@ -5,7 +5,6 @@ import { createAudioUrl } from "../lib/audio";
 
 type AudioPreviewProps = {
   buffer: ArrayBuffer;
-  durationMs?: number;
   sharedAudioRef?: RefObject<HTMLAudioElement | null>;
   onDelete?: () => void | Promise<void>;
   isDeleting?: boolean;
@@ -14,7 +13,6 @@ type AudioPreviewProps = {
 
 export function AudioPreview({
   buffer,
-  durationMs,
   sharedAudioRef,
   onDelete,
   isDeleting,
@@ -124,12 +122,5 @@ export function AudioPreview({
       {!sharedAudioRef && <audio ref={audioRef} className="hidden" />}
     </div>
   );
-}
-
-function formatDuration(durationMs: number) {
-  const seconds = Math.max(0, Math.round(durationMs / 1000));
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}:${secs.toString().padStart(2, "0")}`;
 }
 

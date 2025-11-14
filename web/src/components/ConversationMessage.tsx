@@ -136,7 +136,6 @@ export function ConversationMessage({
         <div className="mt-3">
           <AudioPreview
             buffer={utterance.audioBlob}
-            durationMs={utterance.durationMs}
             sharedAudioRef={audioRef}
             onDelete={onDeleteAudio ? () => onDeleteAudio(message) : undefined}
             isDeleting={isDeletingAudio}
