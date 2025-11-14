@@ -2,10 +2,8 @@ import clsx from "clsx";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { RefObject } from "react";
 import { useTranslation } from "react-i18next";
-import { AudioPreview } from "./AudioPreview";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import type { ChatMessage, UtteranceRecord } from "../types";
+import { ConversationMessage } from "./ConversationMessage";
 
 type ConversationLogProps = {
   messages: ChatMessage[];
@@ -48,7 +46,6 @@ export function ConversationLog({
     (sharedAudioRef as RefObject<HTMLAudioElement | null> | undefined) ??
     fallbackAudioRef;
   const { t } = useTranslation();
-  const [copiedMessageId, setCopiedMessageId] = useState<number | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const assistantMessageRefs = useRef<Map<number, HTMLElement>>(new Map());
   const assistantMessages = useMemo(
@@ -62,6 +59,18 @@ export function ConversationLog({
   const assistantMessageCount = assistantMessages.length;
   const [activeAssistantIndex, setActiveAssistantIndex] = useState(() =>
     assistantMessageCount ? assistantMessageCount - 1 : -1
+  );
+  const [copiedMessageId, setCopiedMessageId] = useState<number | null>(null);
+
+  const registerAssistantNode = useCallback(
+    (id: number, node: HTMLElement | null) => {
+      if (node) {
+        assistantMessageRefs.current.set(id, node);
+      } else {
+        assistantMessageRefs.current.delete(id);
+      }
+    },
+    []
   );
 
   useEffect(() => {
@@ -93,6 +102,25 @@ export function ConversationLog({
     "pointer-events-none fixed top-1/2 -translate-y-1/2 z-30 flex flex-col gap-3 lg:absolute";
   const leftArrowRailClass = clsx(arrowRailBaseClass, "left-2");
   const rightArrowRailClass = clsx(arrowRailBaseClass, "right-2");
+
+  const handleCopyMessage = useCallback(
+    async (message: ChatMessage) => {
+      try {
+        await navigator.clipboard.writeText(message.content);
+        if (message.id != null) {
+          setCopiedMessageId(message.id);
+          window.setTimeout(() => {
+            setCopiedMessageId((current) =>
+              current === message.id ? null : current
+            );
+          }, 2000);
+        }
+      } catch (error) {
+        console.error("Failed to copy message", error);
+      }
+    },
+    []
+  );
 
   const scrollToAssistantIndex = (targetIndex: number) => {
     if (
@@ -237,146 +265,32 @@ export function ConversationLog({
           <p className="text-sm text-slate-400">{t("conversation.empty")}</p>
         )}
         {messages.map((message) => {
-        const utterance = message.linkedUtteranceId
-          ? utteranceById.get(message.linkedUtteranceId)
-          : undefined;
-        const durationMs = utterance?.durationMs;
-        const durationKnown = typeof durationMs === "number";
-        const hasAudio = Boolean(utterance && (!durationKnown || durationMs > 0));
-        const needsRegeneration =
-          message.role === "assistant" && (!utterance || !hasAudio);
+          const utterance = message.linkedUtteranceId
+            ? utteranceById.get(message.linkedUtteranceId)
+            : undefined;
 
-        const isDeleting =
-          Boolean(message.id != null && deletingAudioIds?.has(message.id));
-        const deletingMessage =
-          Boolean(message.id != null && deletingMessageIds?.has(message.id));
-        const isRetrying =
-          Boolean(message.id != null && retryingMessageIds?.has(message.id));
-        const canRetry =
-          message.role === "user" && Boolean(message.id && onRetryResponse);
-
-        return (
-          <article
-            key={message.id}
-            ref={(node) => {
-              if (
-                message.role === "assistant" &&
-                typeof message.id === "number"
-              ) {
-                if (node) {
-                  assistantMessageRefs.current.set(message.id, node);
-                } else {
-                  assistantMessageRefs.current.delete(message.id);
-                }
-              }
-            }}
-            className={clsx(
-              "rounded-2xl border bg-slate-900/85 p-4 shadow-lg shadow-black/20 relative",
-              message.role === "user"
-                ? "border-emerald-300/40"
-                : "border-sky-300/40"
-            )}
-          >
-            <div className="mb-2 flex items-center justify-between text-xs text-slate-400">
-              <span className="inline-flex items-center gap-1 rounded-full border border-slate-500/60 px-3 py-1 text-[0.65rem] font-semibold tracking-wide text-slate-200">
-                {message.role.toUpperCase()}
-              </span>
-              <div className="flex items-center gap-3">
-                <span>{new Date(message.createdUtc).toLocaleTimeString()}</span>
-                {canRetry && (
-                  <button
-                    type="button"
-                    className="text-cyan-300 hover:text-cyan-200 disabled:opacity-60"
-                    disabled={isRetrying || isRetryDisabled}
-                    onClick={() => onRetryResponse?.(message)}
-                  >
-                    {isRetrying ? t("log.retrying") : t("log.retryResponse")}
-                  </button>
-                )}
-                {message.id && onDeleteMessage && (
-                  <button
-                    type="button"
-                    className="text-rose-300 hover:text-rose-200 disabled:opacity-60"
-                    onClick={() => onDeleteMessage(message)}
-                    disabled={deletingMessage}
-                  >
-                    {deletingMessage ? "Deleting..." : "Delete"}
-                  </button>
-                )}
-              </div>
-            </div>
-            <div
-              className="markdown-body text-slate-100"
-              style={{ fontSize: `${fontScale}rem` }}
-            >
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                components={{
-                  p: ({ children }) => (
-                    <p className="my-2 whitespace-pre-wrap break-words">{children}</p>
-                  ),
-                }}
-              >
-                {message.content}
-              </ReactMarkdown>
-            </div>
-            {message.geminiMeta?.tokens && (
-              <p className="mt-2 text-xs text-slate-400">
-                {message.geminiMeta.tokens} tokens | {message.geminiMeta.model}
-              </p>
-            )}
-            {hasAudio && utterance && (
-              <div className="mt-3">
-                <AudioPreview
-                  buffer={utterance.audioBlob}
-                  durationMs={utterance.durationMs}
-                  sharedAudioRef={audioRef}
-                  onDelete={
-                    onDeleteAudio ? () => onDeleteAudio(message) : undefined
-                  }
-                  isDeleting={isDeleting}
-                  playbackRate={playbackRate}
-                />
-              </div>
-            )}
-            {needsRegeneration && onRegenerateAudio && (
-              <div className="mt-3 flex items-center gap-3 text-xs text-slate-400">
-                <span>Audio unavailable.</span>
-                <button
-                  type="button"
-                  className="rounded-full border border-sky-400/60 px-3 py-1 text-[0.7rem] font-semibold text-sky-200 transition hover:bg-sky-400/20"
-                  onClick={() => onRegenerateAudio(message)}
-                >
-                  Re-generate audio
-                </button>
-              </div>
-            )}
-            <button
-              type="button"
-              className="log-copy-button"
-              onClick={async () => {
-                try {
-                  await navigator.clipboard.writeText(message.content);
-                  if (message.id != null) {
-                    setCopiedMessageId(message.id);
-                    window.setTimeout(() => {
-                      setCopiedMessageId((current) =>
-                        current === message.id ? null : current
-                      );
-                    }, 2000);
-                  }
-                } catch (error) {
-                  console.error("Failed to copy message", error);
-                }
-              }}
-            >
-              {copiedMessageId === message.id
-                ? t("log.copied")
-                : t("log.copy")}
-            </button>
-          </article>
-        );
-      })}
+          return (
+            <ConversationMessage
+              key={message.id}
+              message={message}
+              utterance={utterance}
+              audioRef={audioRef}
+              onRegenerateAudio={onRegenerateAudio}
+              onDeleteAudio={onDeleteAudio}
+              deletingAudioIds={deletingAudioIds}
+              onDeleteMessage={onDeleteMessage}
+              deletingMessageIds={deletingMessageIds}
+              playbackRate={playbackRate}
+              fontScale={fontScale}
+              onRetryResponse={onRetryResponse}
+              retryingMessageIds={retryingMessageIds}
+              isRetryDisabled={isRetryDisabled}
+              copiedMessageId={copiedMessageId}
+              onCopyMessage={handleCopyMessage}
+              registerAssistantNode={registerAssistantNode}
+            />
+          );
+        })}
         {!sharedAudioRef && <audio ref={audioRef} className="hidden" />}
       </div>
       <div className={leftArrowRailClass}>
