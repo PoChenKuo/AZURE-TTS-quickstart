@@ -4,6 +4,7 @@ import type { RefObject } from "react";
 import { useTranslation } from "react-i18next";
 import type { ChatMessage, UtteranceRecord } from "../types";
 import { ConversationMessage } from "./ConversationMessage";
+import "./ConversationLog.less";
 
 type ConversationLogProps = {
   messages: ChatMessage[];
@@ -91,7 +92,7 @@ export function ConversationLog({
   const hasNextResponse =
     activeAssistantIndex >= 0 && activeAssistantIndex < assistantMessageCount - 1;
 
-  const wrapperClass = clsx("relative flex h-full min-h-0", className);
+  const wrapperClass = clsx("converation-wrap relative flex h-full min-h-0", className);
   const scrollAreaClass = clsx(
     "flex h-full w-full flex-col gap-4 overflow-y-auto",
     contentClassName

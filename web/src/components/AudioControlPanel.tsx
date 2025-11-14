@@ -27,7 +27,7 @@ export function AudioControlPanel() {
     return (
       <button
         type="button"
-        className="audio-panel-toggle"
+        className="audio-panel-toggle z-40"
         onClick={() => setAudioPanelCollapsed(false)}
       >
         {t("audioPanel.show")}
@@ -73,7 +73,7 @@ export function AudioControlPanel() {
 
   return (
     <div
-      className="audio-control-panel"
+      className="audio-control-panel z-40"
       role="group"
       aria-label={t("audioPanel.nowPlaying")}
     >
@@ -86,7 +86,7 @@ export function AudioControlPanel() {
         onClick={handleToggle}
         aria-label={isPlaying ? t("audioPanel.pause") : t("audioPanel.play")}
       >
-        {isPlaying ? "||" : ">"}
+        {isPlaying ? "||" : "▶"}
       </button>
       <button
         type="button"
@@ -94,12 +94,12 @@ export function AudioControlPanel() {
         onClick={() => setAudioPanelCollapsed(true)}
         aria-label={t("audioPanel.hide")}
       >
-        ×
+        HIDE
       </button>
       <div className="audio-control-panel__progress">
-        <div className="audio-control-panel__label">
+        {/* <div className="audio-control-panel__label">
           {t("audioPanel.nowPlaying")}
-        </div>
+        </div> */}
         <input
           type="range"
           className="audio-progress-slider"

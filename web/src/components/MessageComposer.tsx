@@ -1,5 +1,7 @@
 import type { FormEvent } from "react";
 import { useTranslation } from "react-i18next";
+import "./MessageComposer.less";
+import { AudioControlPanel } from "./AudioControlPanel";
 
 type MessageComposerProps = {
   value: string;
@@ -20,7 +22,7 @@ export function MessageComposer({
   const { t } = useTranslation();
 
   return (
-    <form onSubmit={onSubmit} className="grid" style={{ gap: "0.75rem" }}>
+    <form onSubmit={onSubmit} className="message-composer">
       <textarea
         className="input"
         rows={2}
@@ -30,18 +32,22 @@ export function MessageComposer({
         onChange={(e) => onChange(e.target.value)}
       />
       <div
-        style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
+        className="flex justify-between items-center gap-2"
       >
         <div className="flex items-center gap-4 text-muted text-sm">
           <span>
             {value.length}/{maxLength}
           </span>
-          
+
+        </div>
+        <div className="message-composer-audio">
+          <AudioControlPanel />
         </div>
         <button className="btn btn-primary" type="submit" disabled={isSubmitting}>
           {isSubmitting ? t("composer.sending") : t("composer.send")}
         </button>
       </div>
+
     </form>
   );
 }
