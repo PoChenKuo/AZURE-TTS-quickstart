@@ -97,7 +97,7 @@ const ja = {
       comfortable: "標準（100%）",
       relaxed: "ゆったり（115%）",
       large: "大きい（130%）",
-      extraLarge: "特大（250%）",
+      extraLarge: "特大（150%）",
     },
     save: "変更を保存",
     saving: "保存中…",

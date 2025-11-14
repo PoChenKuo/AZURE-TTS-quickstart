@@ -116,7 +116,7 @@ const en = {
       comfortable: "Comfortable (100%)",
       relaxed: "Relaxed (115%)",
       large: "Large (130%)",
-      extraLarge: "Extra large (250%)",
+      extraLarge: "Extra large (150%)",
       huge: "Huge (170%)",
       superHuge: "Super Huge (190%)",
       extraHuge: "Extra Huge (220%)",
