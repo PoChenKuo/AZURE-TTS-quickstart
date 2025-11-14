@@ -23,7 +23,7 @@ export function MessageComposer({
     <form onSubmit={onSubmit} className="grid" style={{ gap: "0.75rem" }}>
       <textarea
         className="input"
-        rows={4}
+        rows={2}
         placeholder={t("composer.placeholder")}
         value={value}
         maxLength={maxLength}

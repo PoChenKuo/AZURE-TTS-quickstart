@@ -73,8 +73,8 @@ export function ConversationMessage({
         }
       }}
       className={clsx(
-        "rounded-2xl border bg-slate-900/85 p-4 shadow-lg shadow-black/20 relative",
-        message.role === "user" ? "border-emerald-300/40" : "border-sky-300/40", message.role
+        "rounded-2xl bg-slate-900/85 p-4 shadow-lg shadow-black/20 relative",
+        message.role
       )}
     >
       <div className="mb-2 flex items-center justify-between text-xs text-slate-400">
