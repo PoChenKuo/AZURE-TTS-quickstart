@@ -24,6 +24,7 @@ type ConversationMessageProps = {
   copiedMessageId: number | null;
   onCopyMessage?: (message: ChatMessage) => void | Promise<void>;
   registerAssistantNode?: (id: number, node: HTMLElement | null) => void;
+  regeneratingAudioIds?: Set<number>;
 };
 
 export function ConversationMessage({
@@ -43,6 +44,7 @@ export function ConversationMessage({
   copiedMessageId,
   onCopyMessage,
   registerAssistantNode,
+  regeneratingAudioIds,
 }: ConversationMessageProps) {
   const { t } = useTranslation();
 
@@ -60,6 +62,8 @@ export function ConversationMessage({
     Boolean(message.id != null && retryingMessageIds?.has(message.id));
   const canRetry =
     message.role === "user" && Boolean(message.id && onRetryResponse);
+  const isRegeneratingAudio =
+    Boolean(message.id != null && regeneratingAudioIds?.has(message.id));
 
   return (
     <article
@@ -100,7 +104,7 @@ export function ConversationMessage({
               onClick={() => onDeleteMessage(message)}
               disabled={isDeletingMessage}
             >
-              {isDeletingMessage ? "Deleting..." : "Delete"}
+              {isDeletingMessage ? t("common.loading") : t("log.deleteMessage")}
             </button>
           )}
         </div>
@@ -122,10 +126,13 @@ export function ConversationMessage({
       </div>
       {message.geminiMeta?.tokens && (
         <p className="mt-2 text-xs text-slate-400">
-          {message.geminiMeta.tokens} tokens | {message.geminiMeta.model}
+          {t("log.tokens", {
+            count: message.geminiMeta.tokens,
+            model: message.geminiMeta.model,
+          })}
         </p>
       )}
-      {hasAudio && utterance && (
+      {hasAudio && utterance && !isRegeneratingAudio && (
         <div className="mt-3">
           <AudioPreview
             buffer={utterance.audioBlob}
@@ -139,13 +146,18 @@ export function ConversationMessage({
       )}
       {needsRegeneration && onRegenerateAudio && (
         <div className="mt-3 flex items-center gap-3 text-xs text-slate-400">
-          <span>Audio unavailable.</span>
+          <span>
+            {isRegeneratingAudio
+              ? t("log.audioGenerating")
+              : t("log.audioUnavailable")}
+          </span>
           <button
             type="button"
             className="rounded-full border border-sky-400/60 px-3 py-1 text-[0.7rem] font-semibold text-sky-200 transition hover:bg-sky-400/20"
             onClick={() => onRegenerateAudio(message)}
+            disabled={isRegeneratingAudio}
           >
-            Re-generate audio
+            {isRegeneratingAudio ? t("common.loading") : t("log.regenerate")}
           </button>
         </div>
       )}

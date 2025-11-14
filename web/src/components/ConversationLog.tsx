@@ -15,6 +15,7 @@ type ConversationLogProps = {
   sharedAudioRef?: RefObject<HTMLAudioElement | null>;
   onDeleteAudio?: (message: ChatMessage) => void | Promise<void>;
   deletingAudioIds?: Set<number>;
+  regeneratingAudioIds?: Set<number>;
   onDeleteMessage?: (message: ChatMessage) => void | Promise<void>;
   deletingMessageIds?: Set<number>;
   playbackRate?: number;
@@ -34,6 +35,7 @@ export function ConversationLog({
   sharedAudioRef,
   onDeleteAudio,
   deletingAudioIds,
+  regeneratingAudioIds,
   onDeleteMessage,
   deletingMessageIds,
   playbackRate = 1,
@@ -289,6 +291,7 @@ export function ConversationLog({
               copiedMessageId={copiedMessageId}
               onCopyMessage={handleCopyMessage}
               registerAssistantNode={registerAssistantNode}
+              regeneratingAudioIds={regeneratingAudioIds}
             />
           );
         })}

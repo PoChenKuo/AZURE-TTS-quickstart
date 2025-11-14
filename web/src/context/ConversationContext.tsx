@@ -78,6 +78,7 @@ type ConversationContextValue = {
   handleRegenerateAudio: (message: ChatMessage) => Promise<void>;
   handleDeleteAudio: (message: ChatMessage) => Promise<void>;
   deletingAudioIds: Set<number>;
+  regeneratingAudioIds: Set<number>;
   handleDeleteMessage: (message: ChatMessage) => Promise<void>;
   deletingMessageIds: Set<number>;
   handleRetryResponse: (message: ChatMessage) => Promise<void>;
@@ -117,6 +118,9 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
   const [sessionDetailsOpen, setSessionDetailsOpen] = useState(false);
   const [isUpdatingVoice, setIsUpdatingVoice] = useState(false);
   const [deletingAudioIds, setDeletingAudioIds] = useState<Set<number>>(
+    () => new Set()
+  );
+  const [regeneratingAudioIds, setRegeneratingAudioIds] = useState<Set<number>>(
     () => new Set()
   );
   const [achievementPlan, setAchievementPlan] = useState<string | null>(null);
@@ -196,6 +200,20 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
     sessionCacheState,
     activeSession,
     defaultVoice,
+    onAudioStart: (assistantId: number) => {
+      setRegeneratingAudioIds((prev) => {
+        const next = new Set(prev);
+        next.add(assistantId);
+        return next;
+      });
+    },
+    onAudioDone: (assistantId: number) => {
+      setRegeneratingAudioIds((prev) => {
+        const next = new Set(prev);
+        next.delete(assistantId);
+        return next;
+      });
+    },
   });
 
   useAutoPlayAssistantAudio(
@@ -325,6 +343,12 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    setRegeneratingAudioIds((prev) => {
+      const next = new Set(prev);
+      next.add(message.id!);
+      return next;
+    });
+
     try {
       await synthesizeAndStoreAssistantAudio({
         text: message.content,
@@ -337,6 +361,12 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error(error);
       pushToast("Failed to regenerate audio.", "error");
+    } finally {
+      setRegeneratingAudioIds((prev) => {
+        const next = new Set(prev);
+        next.delete(message.id!);
+        return next;
+      });
     }
   }
 
@@ -583,6 +613,7 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
     handleRegenerateAudio,
     handleDeleteAudio,
     deletingAudioIds,
+    regeneratingAudioIds,
     handleDeleteMessage,
     deletingMessageIds,
     handleRetryResponse,

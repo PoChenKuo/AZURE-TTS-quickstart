@@ -63,6 +63,7 @@ function ConversationSurface() {
     handleSubmit,
     isMessagePending,
     conversationFontScale,
+    regeneratingAudioIds,
   } = useConversationContext();
   const [isSidebarCompact, setIsSidebarCompact] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -352,6 +353,7 @@ function ConversationSurface() {
             sharedAudioRef={autoPlayAudioRef}
             onDeleteAudio={handleDeleteAudio}
             deletingAudioIds={deletingAudioIds}
+            regeneratingAudioIds={regeneratingAudioIds}
             onDeleteMessage={handleDeleteMessage}
             deletingMessageIds={deletingMessageIds}
             playbackRate={playbackRate}

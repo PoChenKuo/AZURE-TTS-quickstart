@@ -95,7 +95,7 @@ export function AudioPreview({
   };
 
   const label =
-    typeof durationMs === "number" ? formatDuration(durationMs) : t("audio.playLabel");
+    isPlaying ? t("audio.pause") : t("audio.playLabel");
 
   return (
     <div className="inline-flex flex-wrap items-center gap-3 text-xs text-slate-300">
@@ -104,9 +104,7 @@ export function AudioPreview({
           type="button"
           className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-sky-400/60 text-white transition hover:bg-sky-500/30 disabled:cursor-not-allowed disabled:opacity-60"
           onClick={handleToggle}
-          aria-label={
-            isPlaying ? "Pause assistant audio" : "Play assistant audio"
-          }
+          aria-label={isPlaying ? t("audio.pause") : t("audio.play")}
           disabled={isDeleting}
         >
           {isPlaying ?  "❚❚" : "▶"}
@@ -120,7 +118,7 @@ export function AudioPreview({
           onClick={onDelete}
           disabled={isDeleting}
         >
-          {isDeleting ? "Deleting" : "Delete"}
+          {isDeleting ? t("common.loading") : t("common.delete")}
         </button>
       )}
       {!sharedAudioRef && <audio ref={audioRef} className="hidden" />}

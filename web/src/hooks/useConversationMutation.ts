@@ -32,6 +32,8 @@ type UseConversationMutationArgs = {
   sessionCacheState?: SessionGeminiCacheState;
   activeSession?: ChatSession;
   defaultVoice?: VoiceProfile;
+  onAudioStart?: (assistantId: number) => void;
+  onAudioDone?: (assistantId: number) => void;
 };
 
 type CacheContext = {
@@ -49,6 +51,8 @@ export function useConversationMutation({
   sessionCacheState,
   activeSession,
   defaultVoice,
+  onAudioStart,
+  onAudioDone,
 }: UseConversationMutationArgs) {
   return useMutation({
     mutationFn: async ({
@@ -97,6 +101,9 @@ export function useConversationMutation({
         createdUtc: new Date().toISOString(),
         geminiMeta: meta,
       });
+      if (onAudioStart) {
+        onAudioStart(assistantId);
+      }
       try {
         await synthesizeAndStoreAssistantAudio({
           text: reply,
@@ -109,6 +116,11 @@ export function useConversationMutation({
       catch (error) {
         console.error(error);
         pushToast("Stored the response but audio generation failed.", "error");
+      }
+      finally {
+        if (onAudioDone) {
+          onAudioDone(assistantId);
+        }
       }
     },
     onError: (error: unknown) => {

@@ -78,6 +78,7 @@ const en = {
   },
   log: {
     audioUnavailable: "Audio unavailable.",
+    audioGenerating: "Generating audio...",
     regenerate: "Re-generate audio",
     tokens: "{{count}} tokens | {{model}}",
     timeLabel: "{{time}}",
