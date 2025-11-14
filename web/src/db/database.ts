@@ -138,8 +138,17 @@ export const db = new AppDatabase();
 async function ensureDefaults() {
   const settings = await db.settings.get(1);
   if (!settings) {
-    await db.settings.put(defaultSettings);
+    await db.transaction('rw', db.settings, async () => {
+      await db.settings.put(defaultSettings);
+    }).catch(error => {
+      // 處理可能的資料庫錯誤
+      console.error("初始化設定時發生錯誤:", error);
+    });
   }
+  // const settings = await db.settings.get(1);
+  // if (!settings) {
+  //   await db.settings.put(defaultSettings);
+  // }
 
   const voiceCount = await db.voices.count();
   if (voiceCount === 0) {

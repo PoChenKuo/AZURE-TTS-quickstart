@@ -8,18 +8,10 @@ import type {
   WorkerLog,
 } from "../types";
 import { db } from "./database";
-import { defaultSettings } from "./defaults";
 
 export function useSettingsRecord(): AppSettings | undefined {
   return useLiveQuery<AppSettings | undefined>(
-    async () => {
-      const record = await db.settings.get(1);
-      if (!record) {
-        await db.settings.put(defaultSettings);
-        return defaultSettings;
-      }
-      return record;
-    },
+    () => db.settings.get(1),
     []
   );
 }
