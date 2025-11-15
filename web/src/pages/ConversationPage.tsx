@@ -1,9 +1,11 @@
+import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
 import clsx from "clsx";
 import { SessionSidebar } from "../components/SessionSidebar";
 import { ConversationLog } from "../components/ConversationLog";
 import { MessageComposer } from "../components/MessageComposer";
 import { AudioControlPanel } from "../components/AudioControlPanel";
+import { ConversationContextEditor } from "../components/ConversationContextEditor";
 import {
   ConversationProvider,
   useConversationContext,
@@ -67,7 +69,7 @@ function ConversationSurface() {
   } = useConversationContext();
   const [isSidebarCompact, setIsSidebarCompact] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
+  const { t } = useTranslation();
   useEffect(() => {
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
       return;
@@ -214,93 +216,19 @@ function ConversationSurface() {
           </header>
 
           {activeSession && showContextEditor && (
-            <div className="grid gap-4 rounded-2xl border border-white/10 bg-slate-900/70 p-4 overflow-auto">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-semibold text-white">Chat context</p>
-                  <p className="text-xs text-slate-400">
-                    Clarify the mission and rules for this conversation.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-2 rounded-full border border-white/20 px-4 py-1 text-sm text-white hover:bg-white/10 disabled:opacity-60"
-                  onClick={handleGenerateAchievements}
-                  disabled={isGeneratingAchievements}
-                >
-                  {isGeneratingAchievements ? "Generating..." : "Generate achievements"}
-                </button>
-              </div>
-              <div className="grid gap-1">
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-300">
-                  Goal / Persona
-                </label>
-                <textarea
-                  className="rounded-xl border border-white/15 bg-transparent px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
-                  placeholder="Describe what you're trying to achieve in this chat."
-                  value={goalDraft}
-                  onChange={(e) => setGoalDraft(e.target.value)}
-                  rows={2}
-                />
-              </div>
-              <div className="grid gap-1">
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-300">
-                  Constraints &amp; Guidelines
-                </label>
-                <textarea
-                  className="rounded-xl border border-white/15 bg-transparent px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
-                  placeholder="List tone, boundaries, or requirements for this conversation."
-                  value={constraintsDraft}
-                  onChange={(e) => setConstraintsDraft(e.target.value)}
-                  rows={2}
-                />
-              </div>
-
-              {achievementPlan && (
-                <div className="rounded-2xl border border-white/15 bg-slate-900/80 p-4 shadow-inner shadow-black/30 space-y-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-semibold text-white">Achievement log</p>
-                      <p className="text-xs text-slate-400">
-                        {isGeneratingAchievements
-                          ? "Hold tight—updating achievements…"
-                          : "Snapshot of accomplishments based on this conversation."}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      className="text-xs text-slate-400 hover:text-white"
-                      onClick={handleClearAchievements}
-                    >
-                      Clear
-                    </button>
-                  </div>
-                  <pre className="whitespace-pre-wrap text-sm text-slate-100 bg-slate-950/70 rounded-xl p-3 overflow-x-auto">
-                    {achievementPlan}
-                  </pre>
-                </div>
-              )}
-              <div className="flex justify-end gap-3">
-                <button
-                  type="button"
-                  className="text-sm text-slate-400 hover:text-white"
-                  onClick={() => {
-                    setGoalDraft(activeSession.goalPersona ?? "");
-                    setConstraintsDraft(activeSession.customConstraints ?? "");
-                  }}
-                >
-                  Reset
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={handleSaveSessionDetails}
-                  disabled={isSavingSessionDetails}
-                >
-                  {isSavingSessionDetails ? "Saving..." : "Save"}
-                </button>
-              </div>
-            </div>
+            <ConversationContextEditor
+              activeSession={activeSession}
+              goalDraft={goalDraft}
+              setGoalDraft={setGoalDraft}
+              constraintsDraft={constraintsDraft}
+              setConstraintsDraft={setConstraintsDraft}
+              achievementPlan={achievementPlan}
+              isGeneratingAchievements={isGeneratingAchievements}
+              isSavingSessionDetails={isSavingSessionDetails}
+              onGenerateAchievements={handleGenerateAchievements}
+              onClearAchievements={handleClearAchievements}
+              onSaveSessionDetails={handleSaveSessionDetails}
+            />
           )}
 
           <div className="flex flex-wrap items-center justify-between gap-4">
@@ -390,7 +318,7 @@ function ConversationSurface() {
                 className="rounded-full border border-white/30 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white hover:border-cyan-400/70 hover:text-cyan-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
                 onClick={closeSidebar}
               >
-                Close
+                {t("common.close")}
               </button>
             </div>
             {sidebar}
@@ -402,3 +330,4 @@ function ConversationSurface() {
 }
 
 export default ConversationPage;
+
