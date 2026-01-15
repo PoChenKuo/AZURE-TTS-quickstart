@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+import { VibeKanbanWebCompanion } from "vibe-kanban-web-companion";
 import AppLayout from "./components/AppLayout";
 import SettingsPage from "./pages/SettingsPage";
 import VoiceManagerPage from "./pages/VoiceManagerPage";
@@ -10,6 +11,7 @@ function App() {
 
   return (
     <AppLayout>
+      <VibeKanbanWebCompanion />
       <Routes>
         <Route path="/" element={<Navigate to="/conversation" replace />} />
         <Route path="/conversation" element={<ConversationPage />} />
