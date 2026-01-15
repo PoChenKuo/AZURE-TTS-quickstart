@@ -1,0 +1,73 @@
+const conversation = {
+  sidebar: {
+    newChat: "+ New chat",
+    rename: "Rename",
+    delete: "Delete",
+    empty: "Creating your first chat...",
+    save: "Save",
+    cancel: "Cancel",
+    deleteTitle: "Delete chat?",
+    deleteBody:
+      "This removes \"{{title}}\" and its cached audio. This action cannot be undone.",
+    deleteAction: "Delete chat",
+  },
+  conversation: {
+    titleFallback: "Conversation",
+    contextHeading: "Chat context",
+    contextDescription: "Clarify the mission and rules for this conversation.",
+    empty: "No messages yet. Say hello to Gemini!",
+    goalLabel: "Goal / Persona",
+    goalPlaceholder: "Describe what you're trying to achieve in this chat.",
+    constraintsLabel: "Constraints & Guidelines",
+    constraintsPlaceholder:
+      "List tone, boundaries, or requirements for this conversation.",
+    achievementsHeading: "Achievement log",
+    achievementsDescription: "Snapshot of accomplishments based on this conversation.",
+    achievementsUpdating: "Hold tight—updating achievements…",
+    generateAchievements: "Generate achievements",
+    generateAchievementsBusy: "Generating…",
+    audioAutoplayHint: "Assistant audio auto-plays on each response.",
+    deleteMessage: "Delete",
+    reset: "Reset",
+    save: "Save",
+    systemMetadataHint:
+      "Gemini replies are synthesized into audio blobs and cached in IndexedDB. Toggle autoplay if you prefer manual playback.",
+  },
+  composer: {
+    placeholder: "Ask Gemini anything...",
+    send: "Send",
+    sending: "Sending...",
+    speed: "Speed",
+  },
+  audio: {
+    play: "Play assistant audio",
+    pause: "Pause assistant audio",
+    playLabel: "Play audio",
+  },
+  audioPanel: {
+    nowPlaying: "Assistant audio",
+    rate: "Rate",
+    play: "Play",
+    pause: "Pause",
+    hide: "Hide audio controls",
+    show: "Show audio controls",
+  },
+  log: {
+    audioUnavailable: "Audio unavailable.",
+    audioGenerating: "Generating audio...",
+    regenerate: "Re-generate audio",
+    tokens: "{{count}} tokens | {{model}}",
+    timeLabel: "{{time}}",
+    deleteMessage: "Delete",
+    retryResponse: "Retry Gemini response",
+    retrying: "Retrying...",
+    copy: "Copy",
+    copied: "Copied!",
+    previousResponse: "Previous response",
+    nextResponse: "Next response",
+    scrollTop: "Scroll to top",
+    scrollBottom: "Scroll to bottom",
+  },
+};
+
+export default conversation;
